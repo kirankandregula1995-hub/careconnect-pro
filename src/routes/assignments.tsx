@@ -41,12 +41,12 @@ import {
 } from "@/data/mock";
 import { useSession } from "@/state/session";
 
-type Search = { tab?: string; careGiver?: string };
+type Search = { tab?: string | undefined; careGiver?: string | undefined };
 
 export const Route = createFileRoute("/assignments")({
   validateSearch: (s: Record<string, unknown>): Search => ({
-    tab: typeof s.tab === "string" ? s.tab : undefined,
-    careGiver: typeof s.careGiver === "string" ? s.careGiver : undefined,
+    tab: typeof s["tab"] === "string" ? (s["tab"] as string) : undefined,
+    careGiver: typeof s["careGiver"] === "string" ? (s["careGiver"] as string) : undefined,
   }),
   head: () => ({
     meta: [
@@ -96,10 +96,10 @@ function AssignmentsPage() {
   );
 }
 
-function AssignmentForm({ preselect }: { preselect?: string }) {
+function AssignmentForm({ preselect }: { preselect?: string | undefined }) {
   const { scopeStationIds, scopeFloorIds, role } = useSession();
   const assignable = CARE_GIVERS.filter((c) => c.role !== "Nurse Manager");
-  const [cgId, setCgId] = useState(preselect ?? assignable[0].id);
+  const [cgId, setCgId] = useState(preselect ?? assignable[0]!.id);
   const [type, setType] = useState<"floor" | "station">("station");
   const [floorId, setFloorId] = useState(scopeFloorIds[0] ?? "F3");
   const [stationIds, setStationIds] = useState<string[]>([]);
