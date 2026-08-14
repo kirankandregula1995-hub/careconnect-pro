@@ -12,6 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AssignmentsRouteImport } from './routes/assignments'
 import { Route as CareWorkforceRouteImport } from './routes/care-workforce'
+import { Route as PatientsRouteImport } from './routes/patients'
+import { Route as RosterRouteImport } from './routes/roster'
+import { Route as StationsIndexRouteImport } from './routes/stations.index'
+import { Route as StationsStationIdRouteImport } from './routes/stations.$stationId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +32,93 @@ const CareWorkforceRoute = CareWorkforceRouteImport.update({
   path: '/care-workforce',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PatientsRoute = PatientsRouteImport.update({
+  id: '/patients',
+  path: '/patients',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RosterRoute = RosterRouteImport.update({
+  id: '/roster',
+  path: '/roster',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StationsIndexRoute = StationsIndexRouteImport.update({
+  id: '/stations/',
+  path: '/stations/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StationsStationIdRoute = StationsStationIdRouteImport.update({
+  id: '/stations/$stationId',
+  path: '/stations/$stationId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/assignments': typeof AssignmentsRoute
   '/care-workforce': typeof CareWorkforceRoute
+  '/patients': typeof PatientsRoute
+  '/roster': typeof RosterRoute
+  '/stations/$stationId': typeof StationsStationIdRoute
+  '/stations/': typeof StationsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/assignments': typeof AssignmentsRoute
   '/care-workforce': typeof CareWorkforceRoute
+  '/patients': typeof PatientsRoute
+  '/roster': typeof RosterRoute
+  '/stations/$stationId': typeof StationsStationIdRoute
+  '/stations': typeof StationsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/assignments': typeof AssignmentsRoute
   '/care-workforce': typeof CareWorkforceRoute
+  '/patients': typeof PatientsRoute
+  '/roster': typeof RosterRoute
+  '/stations/$stationId': typeof StationsStationIdRoute
+  '/stations/': typeof StationsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/assignments' | '/care-workforce'
+  fullPaths:
+    | '/'
+    | '/assignments'
+    | '/care-workforce'
+    | '/patients'
+    | '/roster'
+    | '/stations/$stationId'
+    | '/stations/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/assignments' | '/care-workforce'
-  id: '__root__' | '/' | '/assignments' | '/care-workforce'
+  to:
+    | '/'
+    | '/assignments'
+    | '/care-workforce'
+    | '/patients'
+    | '/roster'
+    | '/stations/$stationId'
+    | '/stations'
+  id:
+    | '__root__'
+    | '/'
+    | '/assignments'
+    | '/care-workforce'
+    | '/patients'
+    | '/roster'
+    | '/stations/$stationId'
+    | '/stations/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AssignmentsRoute: typeof AssignmentsRoute
   CareWorkforceRoute: typeof CareWorkforceRoute
+  PatientsRoute: typeof PatientsRoute
+  RosterRoute: typeof RosterRoute
+  StationsStationIdRoute: typeof StationsStationIdRoute
+  StationsIndexRoute: typeof StationsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +144,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CareWorkforceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/patients': {
+      id: '/patients'
+      path: '/patients'
+      fullPath: '/patients'
+      preLoaderRoute: typeof PatientsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/roster': {
+      id: '/roster'
+      path: '/roster'
+      fullPath: '/roster'
+      preLoaderRoute: typeof RosterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stations/': {
+      id: '/stations/'
+      path: '/stations'
+      fullPath: '/stations/'
+      preLoaderRoute: typeof StationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stations/$stationId': {
+      id: '/stations/$stationId'
+      path: '/stations/$stationId'
+      fullPath: '/stations/$stationId'
+      preLoaderRoute: typeof StationsStationIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +179,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AssignmentsRoute: AssignmentsRoute,
   CareWorkforceRoute: CareWorkforceRoute,
+  PatientsRoute: PatientsRoute,
+  RosterRoute: RosterRoute,
+  StationsStationIdRoute: StationsStationIdRoute,
+  StationsIndexRoute: StationsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
