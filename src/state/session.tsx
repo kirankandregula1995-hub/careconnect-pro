@@ -73,7 +73,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>(NOTIFICATIONS);
 
   const value = useMemo<SessionValue>(() => {
-    const user = CARE_GIVERS.find((c) => c.id === userId) ?? CARE_GIVERS[0];
+    const user = (CARE_GIVERS.find((c) => c.id === userId) ?? CARE_GIVERS[0]) as CareGiver;
     const role = user.role;
     const orgWide = role === "Nurse Manager";
     const scopeStationIds = orgWide ? STATIONS.map((s) => s.id) : user.stationIds;
