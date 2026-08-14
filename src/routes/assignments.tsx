@@ -26,38 +26,45 @@ import {
   NoPermission,
   PageHeader,
   ScopeNote,
+  SearchBox,
   StatusPill,
 } from "@/components/workforce/primitives";
 import {
   CARE_GIVERS,
+  EMERGENCY_CODES,
   FLOORS,
+  INVENTORY_ITEMS,
+  PATIENTS,
   SHIFTS,
   SHIFT_TIME,
   STATIONS,
   floorName,
+  isPatientAssignmentEligible,
   stationName,
   stationsOfFloor,
+  type Patient,
   type Shift,
 } from "@/data/mock";
 import { useSession } from "@/state/session";
 
-type Search = { tab?: string | undefined; careGiver?: string | undefined };
+type Search = { area?: string | undefined; tab?: string | undefined; careGiver?: string | undefined };
 
 export const Route = createFileRoute("/assignments")({
   validateSearch: (s: Record<string, unknown>): Search => ({
+    area: typeof s["area"] === "string" ? (s["area"] as string) : undefined,
     tab: typeof s["tab"] === "string" ? (s["tab"] as string) : undefined,
     careGiver: typeof s["careGiver"] === "string" ? (s["careGiver"] as string) : undefined,
   }),
   head: () => ({
     meta: [
-      { title: "Assignments — Coordinator, Clinical Admin & Pharmacist Mapping" },
+      { title: "Assignments — Patient & Workforce Assignment" },
       {
         name: "description",
         content:
-          "Assign care givers floor-wise or nursing station-wise and review coordinator, clinical admin and clinical pharmacist mapping.",
+          "Assign patients to eligible mapped nurses, or assign care givers floor-wise or nursing station-wise across the workforce.",
       },
-      { property: "og:title", content: "Assignments — Care Giver Station Mapping" },
-      { property: "og:description", content: "Floor-wise and station-wise care giver assignment with mapping views." },
+      { property: "og:title", content: "Assignments — Patient & Workforce Assignment" },
+      { property: "og:description", content: "Split patient and workforce assignment flows." },
     ],
   }),
   component: AssignmentsPage,
@@ -70,29 +77,264 @@ function AssignmentsPage() {
 
   if (!can("assignments")) return <NoPermission area="assignment management" />;
 
-  const tab = search.tab ?? "new";
+  const area = search.area ?? "workforce";
 
   return (
     <div className="space-y-5">
       <PageHeader
         title="Assignments"
-        description="Map care givers to floors and nursing stations, and review responsibility-wise mapping."
+        description="Assign patients to eligible mapped nurses, or assign workforce members to nursing stations and floors."
       />
-      <Tabs value={tab} onValueChange={(v) => navigate({ search: (p) => ({ ...p, tab: v }) })}>
-        <TabsList className="flex-wrap">
-          <TabsTrigger value="new">New Assignment</TabsTrigger>
-          <TabsTrigger value="coordinator">Coordinator Mapping</TabsTrigger>
-          <TabsTrigger value="unassigned">Unassigned Coordinators</TabsTrigger>
-          <TabsTrigger value="clinical-admin">Clinical Admin</TabsTrigger>
-          <TabsTrigger value="pharmacist">Clinical Pharmacist</TabsTrigger>
+      <Tabs value={area} onValueChange={(v) => navigate({ search: (p) => ({ ...p, area: v }) })}>
+        <TabsList>
+          <TabsTrigger value="patient">Patient Assignment</TabsTrigger>
+          <TabsTrigger value="workforce">Workforce Assignment</TabsTrigger>
         </TabsList>
-        <TabsContent value="new" className="mt-4"><AssignmentForm preselect={search.careGiver} /></TabsContent>
-        <TabsContent value="coordinator" className="mt-4"><CoordinatorMapping /></TabsContent>
-        <TabsContent value="unassigned" className="mt-4"><UnassignedCoordinators /></TabsContent>
-        <TabsContent value="clinical-admin" className="mt-4"><RoleMapping role="Clinical Admin" /></TabsContent>
-        <TabsContent value="pharmacist" className="mt-4"><PharmacistMapping /></TabsContent>
+        <TabsContent value="patient" className="mt-4">
+          <PatientAssignmentTab />
+        </TabsContent>
+        <TabsContent value="workforce" className="mt-4">
+          <WorkforceAssignmentTab tab={search.tab} careGiver={search.careGiver} />
+        </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function PatientAssignmentTab() {
+  const { scopeStationIds } = useSession();
+  const [q, setQ] = useState("");
+  const [stationFilter, setStationFilter] = useState<string[]>([]);
+  const [assignments, setAssignments] = useState<Record<string, { careGiverId: string; emergencyRoles: string[]; inventoryItems: string[] }>>(
+    () =>
+      Object.fromEntries(
+        PATIENTS.filter((p) => p.careGiverId).map((p) => [
+          p.id,
+          { careGiverId: p.careGiverId as string, emergencyRoles: p.emergencyRoles ?? [], inventoryItems: p.inventoryItems ?? [] },
+        ]),
+      ),
+  );
+  const [target, setTarget] = useState<Patient | null>(null);
+  const [nurseId, setNurseId] = useState("");
+  const [emergencyRoles, setEmergencyRoles] = useState<string[]>([]);
+  const [inventoryItems, setInventoryItems] = useState<string[]>([]);
+
+  const scopedPatients = useMemo(() => PATIENTS.filter((p) => scopeStationIds.includes(p.stationId)), [scopeStationIds]);
+  const filtered = scopedPatients.filter((p) => {
+    const text = `${p.name} ${p.bed}`.toLowerCase();
+    return text.includes(q.toLowerCase()) && (stationFilter.length === 0 || stationFilter.includes(p.stationId));
+  });
+
+  const eligibleNurses = useMemo(
+    () => CARE_GIVERS.filter((c) => isPatientAssignmentEligible(c, scopeStationIds)),
+    [scopeStationIds],
+  );
+  const eligibleForTarget = useMemo(
+    () => (target ? CARE_GIVERS.filter((c) => isPatientAssignmentEligible(c, scopeStationIds, target.stationId)) : []),
+    [target, scopeStationIds],
+  );
+
+  const assignedCount = filtered.filter((p) => assignments[p.id]).length;
+
+  const openDialog = (patient: Patient) => {
+    const existing = assignments[patient.id];
+    setTarget(patient);
+    setNurseId(existing?.careGiverId ?? "");
+    setEmergencyRoles(existing?.emergencyRoles ?? []);
+    setInventoryItems(existing?.inventoryItems ?? []);
+  };
+  const closeDialog = () => {
+    setTarget(null);
+    setNurseId("");
+    setEmergencyRoles([]);
+    setInventoryItems([]);
+  };
+  const confirmAssign = () => {
+    if (!target || !nurseId) return;
+    setAssignments((prev) => ({ ...prev, [target.id]: { careGiverId: nurseId, emergencyRoles, inventoryItems } }));
+    const nurse = CARE_GIVERS.find((c) => c.id === nurseId);
+    toast.success(`${nurse?.name} assigned to ${target.name} (Bed ${target.bed})`);
+    closeDialog();
+  };
+  const unassign = (patient: Patient) => {
+    setAssignments((prev) => {
+      const next = { ...prev };
+      delete next[patient.id];
+      return next;
+    });
+    toast.info(`${patient.name} unassigned`);
+  };
+
+  return (
+    <div className="space-y-4">
+      <ScopeNote text="Only nurses with a configured nurse-patient mapping, active status, a roster shift and station scope match appear as candidates — Coordinator, Clinical Pharmacist, Clinical Admin, IP Manager and Floor Manager are never eligible for patient assignment." />
+
+      {eligibleNurses.length === 0 ? (
+        <EmptyState
+          title="No eligible nurses in scope right now"
+          description="Check that nurses have nurse-patient mapping configured, are Active, and have a roster shift set before assigning patients."
+        />
+      ) : null}
+
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap gap-2">
+          <SearchBox value={q} onChange={setQ} placeholder="Search patient, bed…" />
+          <MultiSelect
+            label="Nursing Station"
+            options={Array.from(new Set(scopedPatients.map((p) => p.stationId))).map((id) => ({ value: id, label: stationName(id) }))}
+            selected={stationFilter}
+            onChange={setStationFilter}
+          />
+        </div>
+        <p className="text-sm text-muted-foreground">{assignedCount} of {filtered.length} patients assigned</p>
+      </div>
+
+      {filtered.length === 0 ? (
+        <EmptyState title="No patients match the selected filters" />
+      ) : (
+        <Card className="overflow-hidden p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Patient</TableHead>
+                  <TableHead>Bed</TableHead>
+                  <TableHead>Nursing Station</TableHead>
+                  <TableHead>Assigned Nurse</TableHead>
+                  <TableHead>Emergency Codes</TableHead>
+                  <TableHead>Inventory</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((p) => {
+                  const record = assignments[p.id];
+                  const nurse = record ? CARE_GIVERS.find((c) => c.id === record.careGiverId) : undefined;
+                  return (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-medium">{p.name}</TableCell>
+                      <TableCell className="num">{p.bed}</TableCell>
+                      <TableCell>{stationName(p.stationId)}</TableCell>
+                      <TableCell>
+                        {nurse ? <StatusPill value={`${nurse.name} — ${nurse.shift}`} /> : <StatusPill value="Unassigned" />}
+                      </TableCell>
+                      <TableCell>
+                        {record && record.emergencyRoles.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {record.emergencyRoles.map((r) => (
+                              <StatusPill key={r} value={EMERGENCY_CODES.find((o) => o.value === r)?.label ?? r} />
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {record && record.inventoryItems.length > 0 ? (
+                          <span className="text-xs" title={record.inventoryItems.join(", ")}>
+                            {record.inventoryItems.length} item(s)
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button size="sm" variant={nurse ? "outline" : "default"} onClick={() => openDialog(p)}>
+                            {nurse ? "Reassign" : "Assign"}
+                          </Button>
+                          {nurse ? (
+                            <Button size="sm" variant="ghost" className="text-destructive" onClick={() => unassign(p)}>
+                              Unassign
+                            </Button>
+                          ) : null}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </Card>
+      )}
+
+      <Dialog open={Boolean(target)} onOpenChange={(o) => !o && closeDialog()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign patient to nurse</DialogTitle>
+            <DialogDescription>
+              {target?.name} — Bed {target?.bed} — {target ? stationName(target.stationId) : ""}
+            </DialogDescription>
+          </DialogHeader>
+          {eligibleForTarget.length === 0 ? (
+            <EmptyState title="No eligible nurse is mapped to this nursing station" />
+          ) : (
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label>Eligible Nurse</Label>
+                <Select value={nurseId} onValueChange={setNurseId}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {eligibleForTarget.map((nurse) => (
+                      <SelectItem key={nurse.id} value={nurse.id}>
+                        {nurse.name} — {nurse.shift} ({SHIFT_TIME[nurse.shift]})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Emergency Codes</Label>
+                <MultiSelect
+                  label="Emergency Codes"
+                  options={EMERGENCY_CODES.map((o) => ({ value: o.value, label: o.label }))}
+                  selected={emergencyRoles}
+                  onChange={setEmergencyRoles}
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Inventory Items</Label>
+                <MultiSelect
+                  label="Inventory Items"
+                  options={INVENTORY_ITEMS.map((i) => ({ value: i, label: i }))}
+                  selected={inventoryItems}
+                  onChange={setInventoryItems}
+                  className="w-full"
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={closeDialog}>Cancel</Button>
+            <Button disabled={!nurseId} onClick={confirmAssign}>Assign</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function WorkforceAssignmentTab({ tab, careGiver }: { tab?: string | undefined; careGiver?: string | undefined }) {
+  const navigate = useNavigate({ from: "/assignments" });
+  const value = tab ?? "new";
+
+  return (
+    <Tabs value={value} onValueChange={(v) => navigate({ search: (p) => ({ ...p, tab: v, careGiver: v === "new" ? p.careGiver : undefined }) })}>
+      <TabsList className="flex-wrap">
+        <TabsTrigger value="new">New Assignment</TabsTrigger>
+        <TabsTrigger value="coordinator">Coordinator Mapping</TabsTrigger>
+        <TabsTrigger value="unassigned">Unassigned Coordinators</TabsTrigger>
+        <TabsTrigger value="clinical-admin">Clinical Admin</TabsTrigger>
+        <TabsTrigger value="pharmacist">Clinical Pharmacist</TabsTrigger>
+      </TabsList>
+      <TabsContent value="new" className="mt-4"><AssignmentForm preselect={careGiver} /></TabsContent>
+      <TabsContent value="coordinator" className="mt-4"><CoordinatorMapping /></TabsContent>
+      <TabsContent value="unassigned" className="mt-4"><UnassignedCoordinators /></TabsContent>
+      <TabsContent value="clinical-admin" className="mt-4"><RoleMapping role="Clinical Admin" /></TabsContent>
+      <TabsContent value="pharmacist" className="mt-4"><PharmacistMapping /></TabsContent>
+    </Tabs>
   );
 }
 

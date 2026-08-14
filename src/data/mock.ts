@@ -83,6 +83,11 @@ export const floorName = (id: string) => floorById(id)?.name ?? "—";
 export const stationName = (id: string) => stationById(id)?.name ?? "—";
 export const stationsOfFloor = (floorId: string) => STATIONS.filter((s) => s.floorId === floorId);
 
+/** Roles capable of bedside/patient care. Every other role (Coordinator, Clinical
+ *  Admin, Clinical Pharmacist, IP Manager, Floor Manager, Nurse Manager) is
+ *  never eligible for Patient Assignment, regardless of mapping/roster status. */
+export const NURSE_CAPABLE_ROLES: RoleName[] = ["Nurse", "Station In-Charge"];
+
 export type CareGiver = {
   id: string;
   empId: string;
@@ -95,6 +100,11 @@ export type CareGiver = {
   status: "Active" | "On Leave" | "Inactive";
   phone: string;
   email: string;
+  /** Nurse-patient mapping configuration (prism_nurse_station_mapping equivalent).
+   *  Only meaningful for NURSE_CAPABLE_ROLES - a Nurse/Station In-Charge without
+   *  this flag has a station and shift but has never been configured for patient
+   *  assignment, so they still don't appear as a Patient Assignment candidate. */
+  nursePatientMappingConfigured: boolean;
 };
 
 const cg = (
@@ -106,6 +116,7 @@ const cg = (
   shift: Shift,
   stationIds: string[],
   status: CareGiver["status"] = "Active",
+  nursePatientMappingConfigured: boolean = NURSE_CAPABLE_ROLES.includes(role),
 ): CareGiver => ({
   id,
   empId,
@@ -118,6 +129,7 @@ const cg = (
   status,
   phone: "+91 98" + (40000000 + Number(id.replace(/\D/g, "")) * 137).toString().slice(0, 8),
   email: name.toLowerCase().replace(/[^a-z]+/g, ".") + "@sunrisehospital.org",
+  nursePatientMappingConfigured,
 });
 
 export const CARE_GIVERS: CareGiver[] = [
@@ -157,10 +169,29 @@ export const CARE_GIVERS: CareGiver[] = [
   cg("CG34", "EMP-1034", "Leela Thomas", "Nurse", "Bedside Nursing", "Morning", ["S501"]),
   cg("CG35", "EMP-1035", "Farhan Ali", "Nurse", "Bedside Nursing", "Evening", ["S502"]),
   cg("CG36", "EMP-1036", "Anjali Bose", "Nurse", "Bedside Nursing", "Morning", ["S101"]),
-  cg("CG37", "EMP-1037", "Vikram Singh", "Nurse", "Bedside Nursing", "Night", ["S102"]),
+  // Vikram Singh: has a station and shift, but nurse-patient mapping was never configured -
+  // demonstrates the eligibility rule rejecting someone otherwise workforce-active.
+  cg("CG37", "EMP-1037", "Vikram Singh", "Nurse", "Bedside Nursing", "Night", ["S102"], "Active", false),
   cg("CG38", "EMP-1038", "Tara Menon", "Clinical Admin", "Clinical Administration", "Evening", ["S401", "S402", "S403"]),
   cg("CG39", "EMP-1039", "Mohan Das", "Clinical Admin", "Clinical Administration", "Morning", []),
   cg("CG40", "EMP-1040", "Rithika Shah", "Nurse", "Bedside Nursing", "Morning", [], "Active"),
+];
+
+export const EMERGENCY_CODES = [
+  { value: "code_blue", label: "Code Blue" },
+  { value: "code_orange", label: "Code Orange" },
+] as const;
+
+export const INVENTORY_ITEMS = [
+  "Code blue Kit",
+  "Disaster kit",
+  "Central line Trolley",
+  "Glucostrip and Quality Control",
+  "SUD",
+  "Portable suction",
+  "External Crash cart checklist",
+  "Central line checklist",
+  "ABG Analysis",
 ];
 
 export type Patient = {
@@ -172,6 +203,10 @@ export type Patient = {
   careGiverId: string | null;
   shift: Shift;
   status: "Admitted" | "Under Observation" | "Discharge Planned";
+  /** Emergency response codes and crash-cart/checklist inventory tagged onto the
+   *  current patient assignment (old nurse-mapper AssignmentsTab.jsx concept). */
+  emergencyRoles?: string[];
+  inventoryItems?: string[];
 };
 
 export const PATIENTS: Patient[] = [
@@ -492,4 +527,31 @@ export function coverageFor(stationId: string, shift?: Shift) {
   const seed = stationId.split("").reduce((a, c) => a + c.charCodeAt(0), 0) + (shift ? shift.length * 7 : 0);
   const base = 62 + (seed % 39);
   return Math.min(100, base);
+}
+
+/**
+ * Patient Assignment eligibility rule. A Care Giver may be assigned a patient
+ * only if ALL of the following hold - Coordinator/Clinical Admin/Clinical
+ * Pharmacist/IP Manager/Floor Manager/Nurse Manager fail on rule 1 and are
+ * never eligible, matching the business rule that patient assignment is
+ * nurse-specific:
+ *   1. nurse-capable role (NURSE_CAPABLE_ROLES)
+ *   2. has nurse-patient mapping configured
+ *   3. active status
+ *   4. rostered for a shift
+ *   5. mapped to the station in question, and that station is in the current scope
+ */
+export function isPatientAssignmentEligible(
+  careGiver: CareGiver,
+  scopeStationIds: string[],
+  stationId?: string,
+): boolean {
+  if (!NURSE_CAPABLE_ROLES.includes(careGiver.role)) return false;
+  if (!careGiver.nursePatientMappingConfigured) return false;
+  if (careGiver.status !== "Active") return false;
+  if (!careGiver.shift) return false;
+  if (careGiver.stationIds.length === 0) return false;
+  if (!careGiver.stationIds.some((id) => scopeStationIds.includes(id))) return false;
+  if (stationId) return careGiver.stationIds.includes(stationId);
+  return true;
 }

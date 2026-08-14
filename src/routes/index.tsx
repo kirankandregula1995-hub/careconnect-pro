@@ -12,11 +12,14 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { AlertTriangle, Bell, Building2, CheckCircle2, ClipboardList, UserMinus, Users } from "lucide-react";
+import { AlertTriangle, Bell, Building2, CheckCircle2, ClipboardList, Stethoscope, UserMinus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
+  EmptyState,
   MultiSelect,
   PageHeader,
   ScopeNote,
@@ -27,6 +30,7 @@ import {
   APPROVALS,
   CARE_GIVERS,
   FLOORS,
+  PATIENTS,
   RESPONSIBILITIES,
   ROLES,
   SHIFTS,
@@ -34,6 +38,7 @@ import {
   TASKS,
   coverageFor,
   floorName,
+  isPatientAssignmentEligible,
   stationName,
 } from "@/data/mock";
 import { useSession } from "@/state/session";
@@ -45,12 +50,12 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Role-aware hospital care workforce dashboard covering care giver distribution, station coverage, shift coverage, tasks and approvals.",
+          "Role-aware hospital care workforce dashboard split into Workforce and Patient operational views.",
       },
       { property: "og:title", content: "Dashboard — Care Workforce Platform" },
       {
         property: "og:description",
-        content: "Role-aware hospital care workforce dashboard with coverage, tasks and approvals.",
+        content: "Workforce coverage and nurse-patient assignment status in one dashboard.",
       },
     ],
   }),
@@ -58,6 +63,33 @@ export const Route = createFileRoute("/")({
 });
 
 function Dashboard() {
+  const { user } = useSession();
+  const [tab, setTab] = useState("workforce");
+
+  return (
+    <div className="space-y-5">
+      <PageHeader
+        title={`Good morning, ${user.name.split(" ")[0]}`}
+        description="Workforce operations and nurse-patient operations, kept as two separate views."
+      />
+
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList>
+          <TabsTrigger value="workforce">Workforce Dashboard</TabsTrigger>
+          <TabsTrigger value="patient">Patient Dashboard</TabsTrigger>
+        </TabsList>
+        <TabsContent value="workforce" className="mt-4">
+          <WorkforceDashboardTab />
+        </TabsContent>
+        <TabsContent value="patient" className="mt-4">
+          <PatientDashboardTab />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function WorkforceDashboardTab() {
   const { user, role, scopeStationIds, scopeFloorIds, unreadCount, can } = useSession();
   const [floors, setFloors] = useState<string[]>([]);
   const [stations, setStations] = useState<string[]>([]);
@@ -123,25 +155,20 @@ function Dashboard() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title={`Good morning, ${user.name.split(" ")[0]}`}
+        title=""
         description={`${role} · ${user.responsibility} — showing data within your authorised scope.`}
         actions={
           <>
             {can("assignments") ? (
               <Button asChild size="sm">
-                <Link to="/assignments" search={{ tab: "new" }}>
+                <Link to="/assignments" search={{ area: "workforce", tab: "new" }}>
                   Assign Care Giver
                 </Link>
               </Button>
             ) : null}
-            {can("approvals") ? (
-              <Button asChild size="sm" variant="outline">
-                <Link to="/approvals">Review Approvals</Link>
-              </Button>
-            ) : null}
             {can("assignments") ? (
               <Button asChild size="sm" variant="outline">
-                <Link to="/assignments" search={{ tab: "coordinator" }}>
+                <Link to="/assignments" search={{ area: "workforce", tab: "coordinator" }}>
                   Coordinator Mapping
                 </Link>
               </Button>
@@ -295,6 +322,113 @@ function Dashboard() {
               <p className="text-sm text-muted-foreground">No nursing station assigned to your account yet.</p>
             ) : null}
           </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function PatientDashboardTab() {
+  const { user, scopeStationIds } = useSession();
+
+  const scopedPatients = useMemo(() => PATIENTS.filter((p) => scopeStationIds.includes(p.stationId)), [scopeStationIds]);
+  const assignedPatients = scopedPatients.filter((p) => p.careGiverId);
+  const unassignedPatients = scopedPatients.filter((p) => !p.careGiverId);
+
+  const eligibleNurses = useMemo(
+    () => CARE_GIVERS.filter((c) => isPatientAssignmentEligible(c, scopeStationIds)),
+    [scopeStationIds],
+  );
+
+  const stationBreakdown = useMemo(() => {
+    const stationIds = Array.from(new Set(scopedPatients.map((p) => p.stationId)));
+    return stationIds.map((id) => {
+      const patients = scopedPatients.filter((p) => p.stationId === id);
+      const assigned = patients.filter((p) => p.careGiverId).length;
+      return { stationId: id, total: patients.length, assigned };
+    });
+  }, [scopedPatients]);
+
+  return (
+    <div className="space-y-5">
+      <PageHeader
+        title={`Patient overview for ${user.name.split(" ")[0]}`}
+        description="Nurse-patient assignment status within your authorised scope. Only nurse-capable, mapped, active and rostered care givers count as eligible."
+        actions={
+          <Button asChild size="sm">
+            <Link to="/assignments" search={{ area: "patient" }}>
+              <Stethoscope className="size-4" /> Go to Patient Assignment
+            </Link>
+          </Button>
+        }
+      />
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard label="Patients in Scope" value={scopedPatients.length} icon={<Users className="size-4" />} />
+        <StatCard label="Assigned" value={assignedPatients.length} tone="success" icon={<CheckCircle2 className="size-4" />} />
+        <StatCard label="Unassigned" value={unassignedPatients.length} tone="warning" icon={<UserMinus className="size-4" />} />
+        <StatCard label="Eligible Nurses" value={eligibleNurses.length} icon={<Stethoscope className="size-4" />} />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-5">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-sm">Patient Coverage by Station</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {stationBreakdown.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No patients in scope.</p>
+            ) : (
+              stationBreakdown.map((row) => {
+                const pct = row.total ? Math.round((row.assigned / row.total) * 100) : 0;
+                return (
+                  <div key={row.stationId}>
+                    <div className="mb-1 flex items-center justify-between text-sm">
+                      <span>{stationName(row.stationId)}</span>
+                      <span className="num text-muted-foreground">
+                        {row.assigned}/{row.total}
+                      </span>
+                    </div>
+                    <Progress value={pct} className="h-2" />
+                  </div>
+                );
+              })
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-3 gap-3 p-0">
+          <div className="p-4 pb-0">
+            <p className="text-sm font-semibold">Unassigned Patients</p>
+          </div>
+          {unassignedPatients.length === 0 ? (
+            <div className="p-4">
+              <EmptyState title="Every patient in scope has an assigned nurse" />
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Patient</TableHead>
+                    <TableHead>Bed</TableHead>
+                    <TableHead>Nursing Station</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {unassignedPatients.map((p) => (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-medium">{p.name}</TableCell>
+                      <TableCell className="num">{p.bed}</TableCell>
+                      <TableCell>{stationName(p.stationId)}</TableCell>
+                      <TableCell><StatusPill value="Unassigned" /></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </Card>
       </div>
     </div>
