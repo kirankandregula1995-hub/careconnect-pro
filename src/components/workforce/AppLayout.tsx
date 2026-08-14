@@ -57,7 +57,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
         return (
           <Link
             key={item.key}
-            to={item.to}
+            to={item.to as never}
             onClick={onNavigate}
             className={cn(
               "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground/85 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
@@ -144,7 +144,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
               </SelectContent>
             </Select>
             <Button asChild variant="ghost" size="icon" className="relative" aria-label="Notifications">
-              <Link to="/notifications">
+              <Link to={"/notifications" as never}>
                 <Bell className="size-5" />
                 {unreadCount > 0 ? (
                   <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-destructive" />
