@@ -281,3 +281,143 @@ export function ScopeNote({ text }: { text: string }) {
     <p className="rounded-md border border-info/25 bg-info/8 px-3 py-2 text-xs text-muted-foreground">{text}</p>
   );
 }
+
+export function Segmented<T extends string>({
+  options,
+  value,
+  onChange,
+  size = "md",
+}: {
+  options: { value: T; label: string; count?: number }[];
+  value: T;
+  onChange: (v: T) => void;
+  size?: "sm" | "md";
+}) {
+  return (
+    <div className="inline-flex max-w-full overflow-x-auto rounded-md border border-border bg-card p-0.5">
+      {options.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          onClick={() => onChange(o.value)}
+          aria-pressed={value === o.value}
+          className={cn(
+            "whitespace-nowrap rounded-[5px] px-3 font-medium transition-colors",
+            size === "sm" ? "py-1 text-xs" : "py-1.5 text-sm",
+            value === o.value
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+          )}
+        >
+          {o.label}
+          {typeof o.count === "number" ? <span className="num ml-1.5 opacity-75">{o.count}</span> : null}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function FilterBar({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
+      {children}
+    </div>
+  );
+}
+
+export function StateBanner({
+  tone,
+  title,
+  description,
+  action,
+}: {
+  tone: "info" | "success" | "warning" | "danger";
+  title: string;
+  description?: string;
+  action?: ReactNode;
+}) {
+  const cls = {
+    info: "border-info/30 bg-info/8",
+    success: "border-success/30 bg-success/10",
+    warning: "border-warning/40 bg-warning/12",
+    danger: "border-destructive/30 bg-destructive/8",
+  }[tone];
+  return (
+    <div className={cn("flex flex-wrap items-start justify-between gap-3 rounded-md border px-3 py-2.5", cls)}>
+      <div className="min-w-0">
+        <p className="text-sm font-medium">{title}</p>
+        {description ? <p className="mt-0.5 text-sm text-muted-foreground">{description}</p> : null}
+      </div>
+      {action}
+    </div>
+  );
+}
+
+export function EligibilityPanel({
+  checks,
+  eligible,
+}: {
+  checks: { label: string; ok: boolean; detail: string }[];
+  eligible: boolean;
+}) {
+  return (
+    <div className="rounded-md border border-border bg-card">
+      <div className="flex items-center justify-between border-b border-border px-3 py-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Eligibility check</p>
+        <StatusPill value={eligible ? "Eligible" : "Not eligible"} />
+      </div>
+      <ul className="divide-y divide-border">
+        {checks.map((c) => (
+          <li key={c.label} className="flex items-start gap-2 px-3 py-2">
+            <span
+              className={cn(
+                "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold",
+                c.ok ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive",
+              )}
+            >
+              {c.ok ? "✓" : "!"}
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-medium">{c.label}</span>
+              <span className={cn("block text-xs", c.ok ? "text-muted-foreground" : "text-destructive")}>{c.detail}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export function KeyValue({ k, v }: { k: string; v: ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-3 py-1">
+      <span className="text-xs uppercase tracking-wide text-muted-foreground">{k}</span>
+      <span className="text-right text-sm font-medium">{v}</span>
+    </div>
+  );
+}
+
+export function SectionCard({
+  title,
+  description,
+  actions,
+  children,
+}: {
+  title: string;
+  description?: string;
+  actions?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-lg border border-border bg-card">
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
+        <div>
+          <h2 className="text-sm font-semibold">{title}</h2>
+          {description ? <p className="text-xs text-muted-foreground">{description}</p> : null}
+        </div>
+        {actions}
+      </header>
+      <div className="p-4">{children}</div>
+    </section>
+  );
+}
