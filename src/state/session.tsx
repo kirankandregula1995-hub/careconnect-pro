@@ -7,47 +7,52 @@ import {
   type Notification,
   type RoleName,
 } from "@/data/mock";
+import {
+  BUILDINGS,
+  ROLE_CAPABILITIES,
+  ROLE_SCOPE,
+  type Capability,
+  type LocalityScope,
+} from "@/data/config";
 
 export type NavKey =
-  | "dashboard"
+  | "workforce-dashboard"
+  | "patient-dashboard"
   | "care-workforce"
-  | "assignments"
   | "roster"
-  | "stations"
-  | "patients"
-  | "tasks"
+  | "workforce-assignment"
+  | "patient-assignment"
   | "policies"
+  | "tasks"
   | "approvals"
   | "notifications"
   | "reports"
   | "audit";
 
-/** Which personas may open which navigation destinations. */
-const ACCESS: Record<RoleName, NavKey[]> = {
-  "Nurse Manager": [
-    "dashboard", "care-workforce", "assignments", "roster", "stations", "patients",
-    "tasks", "policies", "approvals", "notifications", "reports", "audit",
-  ],
-  "Station In-Charge": [
-    "dashboard", "care-workforce", "assignments", "roster", "stations", "patients",
-    "tasks", "approvals", "notifications", "reports",
-  ],
-  "Clinical Admin": ["dashboard", "care-workforce", "assignments", "roster", "stations", "tasks", "notifications", "reports"],
-  Coordinator: ["dashboard", "care-workforce", "roster", "stations", "tasks", "notifications"],
-  "Clinical Pharmacist": ["dashboard", "roster", "stations", "tasks", "notifications"],
-  "IP Manager": ["dashboard", "care-workforce", "assignments", "stations", "roster", "reports", "notifications", "audit"],
-  "Floor Manager": ["dashboard", "care-workforce", "assignments", "stations", "roster", "reports", "notifications", "audit"],
-  Nurse: ["dashboard", "roster", "patients", "tasks", "notifications"],
+/** Navigation is derived from role capabilities — never hardcoded per screen. */
+const NAV_REQUIREMENT: Record<NavKey, Capability[] | "always"> = {
+  "workforce-dashboard": "always",
+  "patient-dashboard": ["Patient View"],
+  "care-workforce": ["Care Workforce Management"],
+  roster: ["Roster View"],
+  "workforce-assignment": ["Station Assignment"],
+  "patient-assignment": ["Patient Assignment"],
+  policies: ["Approval", "Audit"],
+  tasks: ["Task Execution", "Task Assignment"],
+  approvals: ["Approval"],
+  notifications: "always",
+  reports: ["Reports"],
+  audit: ["Audit"],
 };
 
 export const PERSONAS: { id: string; label: string }[] = [
   { id: "CG01", label: "Meera Raghavan — Nurse Manager" },
   { id: "CG11", label: "Lakshmi Venkatesh — Station In-Charge" },
+  { id: "CG15", label: "Sarita Joshi — Floor Manager" },
+  { id: "CG14", label: "Ramesh Gupta — IP Manager" },
   { id: "CG02", label: "Anitha Kumar — Clinical Admin" },
   { id: "CG03", label: "Ravi Kumar — Coordinator" },
   { id: "CG08", label: "Priya Deshmukh — Clinical Pharmacist" },
-  { id: "CG14", label: "Ramesh Gupta — IP Manager" },
-  { id: "CG15", label: "Sarita Joshi — Floor Manager" },
   { id: "CG16", label: "Deepa Krishnan — Nurse" },
 ];
 
@@ -55,11 +60,15 @@ type SessionValue = {
   user: CareGiver;
   setUserId: (id: string) => void;
   role: RoleName;
+  capabilities: Capability[];
+  hasCap: (cap: Capability) => boolean;
+  scopeLevel: LocalityScope;
+  scopeLabel: string;
   can: (key: NavKey) => boolean;
-  /** Station ids inside the signed-in user's authorised scope. */
   scopeStationIds: string[];
-  inScope: (stationId: string) => boolean;
   scopeFloorIds: string[];
+  scopeBuildingIds: string[];
+  inScope: (stationId: string) => boolean;
   notifications: Notification[];
   markRead: (id: string) => void;
   markAllRead: () => void;
@@ -75,19 +84,53 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const value = useMemo<SessionValue>(() => {
     const user = (CARE_GIVERS.find((c) => c.id === userId) ?? CARE_GIVERS[0]) as CareGiver;
     const role = user.role;
-    const orgWide = role === "Nurse Manager";
-    const scopeStationIds = orgWide ? STATIONS.map((s) => s.id) : user.stationIds;
-    const scopeFloorIds = orgWide
-      ? Array.from(new Set(STATIONS.map((s) => s.floorId)))
-      : Array.from(new Set(scopeStationIds.map((id) => STATIONS.find((s) => s.id === id)?.floorId ?? "")));
+    const scopeLevel = ROLE_SCOPE[role];
+    const capabilities = ROLE_CAPABILITIES[role];
+
+    let scopeStationIds: string[];
+    if (scopeLevel === "Hospital") {
+      scopeStationIds = STATIONS.map((s) => s.id);
+    } else if (scopeLevel === "Building") {
+      const buildingIds = BUILDINGS.filter((b) => user.floorIds.some((f) => b.floorIds.includes(f))).map((b) => b.id);
+      scopeStationIds = STATIONS.filter((s) =>
+        BUILDINGS.some((b) => buildingIds.includes(b.id) && b.floorIds.includes(s.floorId)),
+      ).map((s) => s.id);
+    } else if (scopeLevel === "Floor") {
+      scopeStationIds = STATIONS.filter((s) => user.floorIds.includes(s.floorId)).map((s) => s.id);
+    } else {
+      scopeStationIds = user.stationIds;
+    }
+
+    const scopeFloorIds = Array.from(
+      new Set(scopeStationIds.map((id) => STATIONS.find((s) => s.id === id)?.floorId ?? "")),
+    ).filter(Boolean);
+    const scopeBuildingIds = BUILDINGS.filter((b) => b.floorIds.some((f) => scopeFloorIds.includes(f))).map((b) => b.id);
+
+    const hasCap = (cap: Capability) => capabilities.includes(cap);
+
     return {
       user,
       setUserId,
       role,
-      can: (key) => ACCESS[role].includes(key),
+      capabilities,
+      hasCap,
+      scopeLevel,
+      scopeLabel:
+        scopeLevel === "Hospital"
+          ? "All hospital locations"
+          : scopeLevel === "Building"
+            ? `${scopeBuildingIds.length} building(s)`
+            : scopeLevel === "Floor"
+              ? `${scopeFloorIds.length} floor(s)`
+              : `${scopeStationIds.length} nursing station(s)`,
+      can: (key) => {
+        const req = NAV_REQUIREMENT[key];
+        return req === "always" ? true : req.some((c) => capabilities.includes(c));
+      },
       scopeStationIds,
+      scopeFloorIds,
+      scopeBuildingIds,
       inScope: (stationId) => scopeStationIds.includes(stationId),
-      scopeFloorIds: scopeFloorIds.filter(Boolean),
       notifications,
       markRead: (id) => setNotifications((n) => n.map((x) => (x.id === id ? { ...x, read: true } : x))),
       markAllRead: () => setNotifications((n) => n.map((x) => ({ ...x, read: true }))),
