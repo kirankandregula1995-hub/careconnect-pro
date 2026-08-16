@@ -406,6 +406,7 @@ function CreateWorkforceDialog({
                   stationIds: [],
                   floorIds: [],
                   status: "Active",
+                  nursePatientMappingConfigured: role === "Nurse" || role === "Station In-Charge",
                   phone: "+91 98000 00000",
                   email: `${empId.toLowerCase()}@sunrisehospital.org`,
                 });
