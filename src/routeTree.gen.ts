@@ -11,7 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CareWorkforceRouteImport } from './routes/care-workforce'
+import { Route as PatientAssignmentRouteImport } from './routes/patient-assignment'
 import { Route as PatientDashboardRouteImport } from './routes/patient-dashboard'
+import { Route as RosterRouteImport } from './routes/roster'
+import { Route as WorkforceAssignmentRouteImport } from './routes/workforce-assignment'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -23,40 +26,86 @@ const CareWorkforceRoute = CareWorkforceRouteImport.update({
   path: '/care-workforce',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PatientAssignmentRoute = PatientAssignmentRouteImport.update({
+  id: '/patient-assignment',
+  path: '/patient-assignment',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PatientDashboardRoute = PatientDashboardRouteImport.update({
   id: '/patient-dashboard',
   path: '/patient-dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RosterRoute = RosterRouteImport.update({
+  id: '/roster',
+  path: '/roster',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WorkforceAssignmentRoute = WorkforceAssignmentRouteImport.update({
+  id: '/workforce-assignment',
+  path: '/workforce-assignment',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/care-workforce': typeof CareWorkforceRoute
+  '/patient-assignment': typeof PatientAssignmentRoute
   '/patient-dashboard': typeof PatientDashboardRoute
+  '/roster': typeof RosterRoute
+  '/workforce-assignment': typeof WorkforceAssignmentRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/care-workforce': typeof CareWorkforceRoute
+  '/patient-assignment': typeof PatientAssignmentRoute
   '/patient-dashboard': typeof PatientDashboardRoute
+  '/roster': typeof RosterRoute
+  '/workforce-assignment': typeof WorkforceAssignmentRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/care-workforce': typeof CareWorkforceRoute
+  '/patient-assignment': typeof PatientAssignmentRoute
   '/patient-dashboard': typeof PatientDashboardRoute
+  '/roster': typeof RosterRoute
+  '/workforce-assignment': typeof WorkforceAssignmentRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/care-workforce' | '/patient-dashboard'
+  fullPaths:
+    | '/'
+    | '/care-workforce'
+    | '/patient-assignment'
+    | '/patient-dashboard'
+    | '/roster'
+    | '/workforce-assignment'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/care-workforce' | '/patient-dashboard'
-  id: '__root__' | '/' | '/care-workforce' | '/patient-dashboard'
+  to:
+    | '/'
+    | '/care-workforce'
+    | '/patient-assignment'
+    | '/patient-dashboard'
+    | '/roster'
+    | '/workforce-assignment'
+  id:
+    | '__root__'
+    | '/'
+    | '/care-workforce'
+    | '/patient-assignment'
+    | '/patient-dashboard'
+    | '/roster'
+    | '/workforce-assignment'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CareWorkforceRoute: typeof CareWorkforceRoute
+  PatientAssignmentRoute: typeof PatientAssignmentRoute
   PatientDashboardRoute: typeof PatientDashboardRoute
+  RosterRoute: typeof RosterRoute
+  WorkforceAssignmentRoute: typeof WorkforceAssignmentRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -75,11 +124,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CareWorkforceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/patient-assignment': {
+      id: '/patient-assignment'
+      path: '/patient-assignment'
+      fullPath: '/patient-assignment'
+      preLoaderRoute: typeof PatientAssignmentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/patient-dashboard': {
       id: '/patient-dashboard'
       path: '/patient-dashboard'
       fullPath: '/patient-dashboard'
       preLoaderRoute: typeof PatientDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/roster': {
+      id: '/roster'
+      path: '/roster'
+      fullPath: '/roster'
+      preLoaderRoute: typeof RosterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/workforce-assignment': {
+      id: '/workforce-assignment'
+      path: '/workforce-assignment'
+      fullPath: '/workforce-assignment'
+      preLoaderRoute: typeof WorkforceAssignmentRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -88,7 +158,10 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CareWorkforceRoute: CareWorkforceRoute,
+  PatientAssignmentRoute: PatientAssignmentRoute,
   PatientDashboardRoute: PatientDashboardRoute,
+  RosterRoute: RosterRoute,
+  WorkforceAssignmentRoute: WorkforceAssignmentRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
