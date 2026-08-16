@@ -10,33 +10,53 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CareWorkforceRouteImport } from './routes/care-workforce'
+import { Route as PatientDashboardRouteImport } from './routes/patient-dashboard'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CareWorkforceRoute = CareWorkforceRouteImport.update({
+  id: '/care-workforce',
+  path: '/care-workforce',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PatientDashboardRoute = PatientDashboardRouteImport.update({
+  id: '/patient-dashboard',
+  path: '/patient-dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/care-workforce': typeof CareWorkforceRoute
+  '/patient-dashboard': typeof PatientDashboardRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/care-workforce': typeof CareWorkforceRoute
+  '/patient-dashboard': typeof PatientDashboardRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/care-workforce': typeof CareWorkforceRoute
+  '/patient-dashboard': typeof PatientDashboardRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/care-workforce' | '/patient-dashboard'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/care-workforce' | '/patient-dashboard'
+  id: '__root__' | '/' | '/care-workforce' | '/patient-dashboard'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CareWorkforceRoute: typeof CareWorkforceRoute
+  PatientDashboardRoute: typeof PatientDashboardRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +68,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/care-workforce': {
+      id: '/care-workforce'
+      path: '/care-workforce'
+      fullPath: '/care-workforce'
+      preLoaderRoute: typeof CareWorkforceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/patient-dashboard': {
+      id: '/patient-dashboard'
+      path: '/patient-dashboard'
+      fullPath: '/patient-dashboard'
+      preLoaderRoute: typeof PatientDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CareWorkforceRoute: CareWorkforceRoute,
+  PatientDashboardRoute: PatientDashboardRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
