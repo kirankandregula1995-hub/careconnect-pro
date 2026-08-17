@@ -11,10 +11,13 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApprovalsRouteImport } from './routes/approvals'
+import { Route as AuditRouteImport } from './routes/audit'
 import { Route as CareWorkforceRouteImport } from './routes/care-workforce'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as PatientAssignmentRouteImport } from './routes/patient-assignment'
 import { Route as PatientDashboardRouteImport } from './routes/patient-dashboard'
 import { Route as PoliciesRouteImport } from './routes/policies'
+import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as RosterRouteImport } from './routes/roster'
 import { Route as WorkforceAssignmentRouteImport } from './routes/workforce-assignment'
 import { Route as TasksIndexRouteImport } from './routes/tasks.index'
@@ -30,9 +33,19 @@ const ApprovalsRoute = ApprovalsRouteImport.update({
   path: '/approvals',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuditRoute = AuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CareWorkforceRoute = CareWorkforceRouteImport.update({
   id: '/care-workforce',
   path: '/care-workforce',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PatientAssignmentRoute = PatientAssignmentRouteImport.update({
@@ -48,6 +61,11 @@ const PatientDashboardRoute = PatientDashboardRouteImport.update({
 const PoliciesRoute = PoliciesRouteImport.update({
   id: '/policies',
   path: '/policies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RosterRoute = RosterRouteImport.update({
@@ -74,10 +92,13 @@ const TasksTaskIdRoute = TasksTaskIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/approvals': typeof ApprovalsRoute
+  '/audit': typeof AuditRoute
   '/care-workforce': typeof CareWorkforceRoute
+  '/notifications': typeof NotificationsRoute
   '/patient-assignment': typeof PatientAssignmentRoute
   '/patient-dashboard': typeof PatientDashboardRoute
   '/policies': typeof PoliciesRoute
+  '/reports': typeof ReportsRoute
   '/roster': typeof RosterRoute
   '/workforce-assignment': typeof WorkforceAssignmentRoute
   '/tasks/$taskId': typeof TasksTaskIdRoute
@@ -86,10 +107,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/approvals': typeof ApprovalsRoute
+  '/audit': typeof AuditRoute
   '/care-workforce': typeof CareWorkforceRoute
+  '/notifications': typeof NotificationsRoute
   '/patient-assignment': typeof PatientAssignmentRoute
   '/patient-dashboard': typeof PatientDashboardRoute
   '/policies': typeof PoliciesRoute
+  '/reports': typeof ReportsRoute
   '/roster': typeof RosterRoute
   '/workforce-assignment': typeof WorkforceAssignmentRoute
   '/tasks/$taskId': typeof TasksTaskIdRoute
@@ -99,10 +123,13 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/approvals': typeof ApprovalsRoute
+  '/audit': typeof AuditRoute
   '/care-workforce': typeof CareWorkforceRoute
+  '/notifications': typeof NotificationsRoute
   '/patient-assignment': typeof PatientAssignmentRoute
   '/patient-dashboard': typeof PatientDashboardRoute
   '/policies': typeof PoliciesRoute
+  '/reports': typeof ReportsRoute
   '/roster': typeof RosterRoute
   '/workforce-assignment': typeof WorkforceAssignmentRoute
   '/tasks/$taskId': typeof TasksTaskIdRoute
@@ -113,10 +140,13 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/approvals'
+    | '/audit'
     | '/care-workforce'
+    | '/notifications'
     | '/patient-assignment'
     | '/patient-dashboard'
     | '/policies'
+    | '/reports'
     | '/roster'
     | '/workforce-assignment'
     | '/tasks/$taskId'
@@ -125,10 +155,13 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/approvals'
+    | '/audit'
     | '/care-workforce'
+    | '/notifications'
     | '/patient-assignment'
     | '/patient-dashboard'
     | '/policies'
+    | '/reports'
     | '/roster'
     | '/workforce-assignment'
     | '/tasks/$taskId'
@@ -137,10 +170,13 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/approvals'
+    | '/audit'
     | '/care-workforce'
+    | '/notifications'
     | '/patient-assignment'
     | '/patient-dashboard'
     | '/policies'
+    | '/reports'
     | '/roster'
     | '/workforce-assignment'
     | '/tasks/$taskId'
@@ -150,10 +186,13 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApprovalsRoute: typeof ApprovalsRoute
+  AuditRoute: typeof AuditRoute
   CareWorkforceRoute: typeof CareWorkforceRoute
+  NotificationsRoute: typeof NotificationsRoute
   PatientAssignmentRoute: typeof PatientAssignmentRoute
   PatientDashboardRoute: typeof PatientDashboardRoute
   PoliciesRoute: typeof PoliciesRoute
+  ReportsRoute: typeof ReportsRoute
   RosterRoute: typeof RosterRoute
   WorkforceAssignmentRoute: typeof WorkforceAssignmentRoute
   TasksTaskIdRoute: typeof TasksTaskIdRoute
@@ -176,11 +215,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApprovalsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/audit': {
+      id: '/audit'
+      path: '/audit'
+      fullPath: '/audit'
+      preLoaderRoute: typeof AuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/care-workforce': {
       id: '/care-workforce'
       path: '/care-workforce'
       fullPath: '/care-workforce'
       preLoaderRoute: typeof CareWorkforceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/patient-assignment': {
@@ -202,6 +255,13 @@ declare module '@tanstack/react-router' {
       path: '/policies'
       fullPath: '/policies'
       preLoaderRoute: typeof PoliciesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/roster': {
@@ -238,10 +298,13 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApprovalsRoute: ApprovalsRoute,
+  AuditRoute: AuditRoute,
   CareWorkforceRoute: CareWorkforceRoute,
+  NotificationsRoute: NotificationsRoute,
   PatientAssignmentRoute: PatientAssignmentRoute,
   PatientDashboardRoute: PatientDashboardRoute,
   PoliciesRoute: PoliciesRoute,
+  ReportsRoute: ReportsRoute,
   RosterRoute: RosterRoute,
   WorkforceAssignmentRoute: WorkforceAssignmentRoute,
   TasksTaskIdRoute: TasksTaskIdRoute,
