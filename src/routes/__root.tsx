@@ -13,6 +13,8 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { SessionProvider } from "@/state/session";
+import { RosterProvider } from "@/state/roster";
+
 import { AppLayout } from "@/components/workforce/AppLayout";
 
 function NotFoundComponent() {
