@@ -13,6 +13,8 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { SessionProvider } from "@/state/session";
+import { RosterProvider } from "@/state/roster";
+
 import { AppLayout } from "@/components/workforce/AppLayout";
 
 function NotFoundComponent() {
@@ -126,11 +128,14 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
-        <AppLayout>
-          <Outlet />
-        </AppLayout>
-        <Toaster position="top-right" richColors />
+        <RosterProvider>
+          <AppLayout>
+            <Outlet />
+          </AppLayout>
+          <Toaster position="top-right" richColors />
+        </RosterProvider>
       </SessionProvider>
+
     </QueryClientProvider>
   );
 }

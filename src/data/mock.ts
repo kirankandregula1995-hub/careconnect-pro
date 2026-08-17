@@ -31,11 +31,11 @@ export const RESPONSIBILITIES = [
 ] as const;
 export type Responsibility = (typeof RESPONSIBILITIES)[number];
 
-export const SHIFTS = ["Morning", "Evening", "Night"] as const;
+export const SHIFTS = ["Morning", "Afternoon", "Night"] as const;
 export type Shift = (typeof SHIFTS)[number];
 export const SHIFT_TIME: Record<Shift, string> = {
   Morning: "07:00 – 15:00",
-  Evening: "15:00 – 23:00",
+  Afternoon: "15:00 – 23:00",
   Night: "23:00 – 07:00",
 };
 
@@ -136,43 +136,43 @@ export const CARE_GIVERS: CareGiver[] = [
   cg("CG01", "EMP-1001", "Meera Raghavan", "Nurse Manager", "Workforce Oversight", "Morning", ["S201", "S301", "S302", "S401", "S501"]),
   cg("CG02", "EMP-1002", "Anitha Kumar", "Clinical Admin", "Clinical Administration", "Morning", ["S301", "S302", "S303", "S304"]),
   cg("CG03", "EMP-1003", "Ravi Kumar", "Coordinator", "Coordinator", "Morning", ["S301", "S302", "S304"]),
-  cg("CG04", "EMP-1004", "Suresh Iyer", "Coordinator", "Coordinator", "Evening", ["S301", "S303"]),
+  cg("CG04", "EMP-1004", "Suresh Iyer", "Coordinator", "Coordinator", "Afternoon", ["S301", "S303"]),
   cg("CG05", "EMP-1005", "Divya Nair", "Coordinator", "Coordinator", "Night", ["S401", "S402"]),
   cg("CG06", "EMP-1006", "Fatima Sheikh", "Coordinator", "Coordinator", "Morning", []),
-  cg("CG07", "EMP-1007", "Joseph Mathew", "Coordinator", "Coordinator", "Evening", []),
+  cg("CG07", "EMP-1007", "Joseph Mathew", "Coordinator", "Coordinator", "Afternoon", []),
   cg("CG08", "EMP-1008", "Priya Deshmukh", "Clinical Pharmacist", "Clinical Pharmacy", "Morning", ["S301", "S302"]),
-  cg("CG09", "EMP-1009", "Karthik Menon", "Clinical Pharmacist", "Clinical Pharmacy", "Evening", ["S401", "S403"]),
+  cg("CG09", "EMP-1009", "Karthik Menon", "Clinical Pharmacist", "Clinical Pharmacy", "Afternoon", ["S401", "S403"]),
   cg("CG10", "EMP-1010", "Sneha Pillai", "Clinical Pharmacist", "Clinical Pharmacy", "Morning", ["S501", "S502"]),
   cg("CG11", "EMP-1011", "Lakshmi Venkatesh", "Station In-Charge", "Station In-Charge", "Morning", ["S301", "S302"]),
-  cg("CG12", "EMP-1012", "Arjun Reddy", "Station In-Charge", "Station In-Charge", "Evening", ["S401", "S402"]),
+  cg("CG12", "EMP-1012", "Arjun Reddy", "Station In-Charge", "Station In-Charge", "Afternoon", ["S401", "S402"]),
   cg("CG13", "EMP-1013", "Nisha Verma", "Station In-Charge", "Station In-Charge", "Night", ["S201", "S202"]),
   cg("CG14", "EMP-1014", "Ramesh Gupta", "IP Manager", "Inpatient Operations", "Morning", ["S201", "S301", "S401"]),
   cg("CG15", "EMP-1015", "Sarita Joshi", "Floor Manager", "Floor Operations", "Morning", ["S301", "S302", "S303", "S304"]),
   cg("CG16", "EMP-1016", "Deepa Krishnan", "Nurse", "Bedside Nursing", "Morning", ["S301"]),
   cg("CG17", "EMP-1017", "Vishal Rao", "Nurse", "Bedside Nursing", "Morning", ["S301"]),
-  cg("CG18", "EMP-1018", "Kavya Suresh", "Nurse", "Bedside Nursing", "Evening", ["S301"]),
+  cg("CG18", "EMP-1018", "Kavya Suresh", "Nurse", "Bedside Nursing", "Afternoon", ["S301"]),
   cg("CG19", "EMP-1019", "Manoj Tiwari", "Nurse", "Bedside Nursing", "Night", ["S301"]),
   cg("CG20", "EMP-1020", "Rekha Bhatt", "Nurse", "Bedside Nursing", "Morning", ["S302"]),
-  cg("CG21", "EMP-1021", "Imran Qureshi", "Nurse", "Bedside Nursing", "Evening", ["S302"]),
+  cg("CG21", "EMP-1021", "Imran Qureshi", "Nurse", "Bedside Nursing", "Afternoon", ["S302"]),
   cg("CG22", "EMP-1022", "Shalini Prasad", "Nurse", "Bedside Nursing", "Night", ["S302"], "On Leave"),
   cg("CG23", "EMP-1023", "Ajay Bhatia", "Nurse", "Bedside Nursing", "Morning", ["S303"]),
-  cg("CG24", "EMP-1024", "Neha Sinha", "Nurse", "Bedside Nursing", "Evening", ["S303"]),
+  cg("CG24", "EMP-1024", "Neha Sinha", "Nurse", "Bedside Nursing", "Afternoon", ["S303"]),
   cg("CG25", "EMP-1025", "Gopal Shetty", "Nurse", "Bedside Nursing", "Morning", ["S304"]),
-  cg("CG26", "EMP-1026", "Aarti Malhotra", "Nurse", "Bedside Nursing", "Evening", ["S304"]),
+  cg("CG26", "EMP-1026", "Aarti Malhotra", "Nurse", "Bedside Nursing", "Afternoon", ["S304"]),
   cg("CG27", "EMP-1027", "Rahul Kulkarni", "Nurse", "Bedside Nursing", "Morning", ["S401"]),
-  cg("CG28", "EMP-1028", "Swati Chauhan", "Nurse", "Bedside Nursing", "Evening", ["S401"]),
+  cg("CG28", "EMP-1028", "Swati Chauhan", "Nurse", "Bedside Nursing", "Afternoon", ["S401"]),
   cg("CG29", "EMP-1029", "Nandini Rao", "Nurse", "Bedside Nursing", "Morning", ["S402"]),
   cg("CG30", "EMP-1030", "Pooja Agarwal", "Nurse", "Bedside Nursing", "Night", ["S403"]),
   cg("CG31", "EMP-1031", "Sanjay Patel", "Nurse", "Bedside Nursing", "Morning", ["S201"]),
-  cg("CG32", "EMP-1032", "Bhavna Desai", "Nurse", "Bedside Nursing", "Evening", ["S202"]),
+  cg("CG32", "EMP-1032", "Bhavna Desai", "Nurse", "Bedside Nursing", "Afternoon", ["S202"]),
   cg("CG33", "EMP-1033", "Harish Chandra", "Nurse", "Bedside Nursing", "Morning", ["S203"]),
   cg("CG34", "EMP-1034", "Leela Thomas", "Nurse", "Bedside Nursing", "Morning", ["S501"]),
-  cg("CG35", "EMP-1035", "Farhan Ali", "Nurse", "Bedside Nursing", "Evening", ["S502"]),
+  cg("CG35", "EMP-1035", "Farhan Ali", "Nurse", "Bedside Nursing", "Afternoon", ["S502"]),
   cg("CG36", "EMP-1036", "Anjali Bose", "Nurse", "Bedside Nursing", "Morning", ["S101"]),
   // Vikram Singh: has a station and shift, but nurse-patient mapping was never configured -
   // demonstrates the eligibility rule rejecting someone otherwise workforce-active.
   cg("CG37", "EMP-1037", "Vikram Singh", "Nurse", "Bedside Nursing", "Night", ["S102"], "Active", false),
-  cg("CG38", "EMP-1038", "Tara Menon", "Clinical Admin", "Clinical Administration", "Evening", ["S401", "S402", "S403"]),
+  cg("CG38", "EMP-1038", "Tara Menon", "Clinical Admin", "Clinical Administration", "Afternoon", ["S401", "S402", "S403"]),
   cg("CG39", "EMP-1039", "Mohan Das", "Clinical Admin", "Clinical Administration", "Morning", []),
   cg("CG40", "EMP-1040", "Rithika Shah", "Nurse", "Bedside Nursing", "Morning", [], "Active"),
 ];
@@ -213,15 +213,15 @@ export const PATIENTS: Patient[] = [
   { id: "P1", name: "Ganesh Iyer", mrn: "MRN-448201", bed: "301-A1", stationId: "S301", careGiverId: "CG16", shift: "Morning", status: "Admitted" },
   { id: "P2", name: "Radha Menon", mrn: "MRN-448215", bed: "301-A2", stationId: "S301", careGiverId: "CG16", shift: "Morning", status: "Under Observation" },
   { id: "P3", name: "Salim Khan", mrn: "MRN-448233", bed: "301-B1", stationId: "S301", careGiverId: "CG17", shift: "Morning", status: "Admitted" },
-  { id: "P4", name: "Kiran Bedi", mrn: "MRN-448250", bed: "301-B4", stationId: "S301", careGiverId: null, shift: "Evening", status: "Admitted" },
+  { id: "P4", name: "Kiran Bedi", mrn: "MRN-448250", bed: "301-B4", stationId: "S301", careGiverId: null, shift: "Afternoon", status: "Admitted" },
   { id: "P5", name: "Sunita Roy", mrn: "MRN-448266", bed: "302-A1", stationId: "S302", careGiverId: "CG20", shift: "Morning", status: "Under Observation" },
-  { id: "P6", name: "Ashok Naidu", mrn: "MRN-448278", bed: "302-A3", stationId: "S302", careGiverId: "CG21", shift: "Evening", status: "Discharge Planned" },
+  { id: "P6", name: "Ashok Naidu", mrn: "MRN-448278", bed: "302-A3", stationId: "S302", careGiverId: "CG21", shift: "Afternoon", status: "Discharge Planned" },
   { id: "P7", name: "Mary Fernandes", mrn: "MRN-448290", bed: "303-C2", stationId: "S303", careGiverId: "CG23", shift: "Morning", status: "Admitted" },
   { id: "P8", name: "Devendra Yadav", mrn: "MRN-448311", bed: "304-A2", stationId: "S304", careGiverId: "CG25", shift: "Morning", status: "Admitted" },
   { id: "P9", name: "Ruchi Sharma", mrn: "MRN-448322", bed: "401-B1", stationId: "S401", careGiverId: "CG27", shift: "Morning", status: "Admitted" },
   { id: "P10", name: "Prakash Jain", mrn: "MRN-448340", bed: "402-A1", stationId: "S402", careGiverId: "CG29", shift: "Morning", status: "Under Observation" },
   { id: "P11", name: "Zoya Ahmed", mrn: "MRN-448356", bed: "501-A4", stationId: "S501", careGiverId: "CG34", shift: "Morning", status: "Admitted" },
-  { id: "P12", name: "Balan Nair", mrn: "MRN-448372", bed: "502-B2", stationId: "S502", careGiverId: null, shift: "Evening", status: "Discharge Planned" },
+  { id: "P12", name: "Balan Nair", mrn: "MRN-448372", bed: "502-B2", stationId: "S502", careGiverId: null, shift: "Afternoon", status: "Discharge Planned" },
 ];
 
 export type TaskStatus = "Open" | "In Progress" | "Completed" | "Overdue" | "Escalated";
@@ -428,7 +428,7 @@ export const NOTIFICATIONS: Notification[] = [
   { id: "N5", category: "Roster", title: "Roster published for week of 17 Aug", body: "Floor 3 roster has been published and is open for review.", stationId: "S301", priority: "Low", at: "13 Aug, 18:30", read: true },
   { id: "N6", category: "Escalation", title: "Escalation raised to Nurse Manager", body: "Coverage escalation for Ward 403 reached level 3 after SLA breach.", stationId: "S403", priority: "High", at: "13 Aug, 22:35", read: true },
   { id: "N7", category: "System", title: "Scheduled maintenance window", body: "Care Workforce platform will be read-only on 16 Aug, 01:00–02:00.", priority: "Low", at: "12 Aug, 09:00", read: true },
-  { id: "N8", category: "Assignment", title: "Clinical Admin mapping updated", body: "Tara Menon now covers Ward 401, 402 and 403 for the Evening shift.", stationId: "S401", priority: "Medium", at: "12 Aug, 15:12", read: true },
+  { id: "N8", category: "Assignment", title: "Clinical Admin mapping updated", body: "Tara Menon now covers Ward 401, 402 and 403 for the Afternoon shift.", stationId: "S401", priority: "Medium", at: "12 Aug, 15:12", read: true },
 ];
 
 export type AuditEntry = {
@@ -449,8 +449,8 @@ export const AUDIT: AuditEntry[] = [
   { id: "A1", date: "14 Aug 2026, 08:05", user: "Meera Raghavan", action: "CREATE", role: "Nurse Manager", responsibility: "Workforce Oversight", floorId: "F3", stationId: "S301", shift: "Morning", oldValue: "—", newValue: "Coordinator: Ravi Kumar" },
   { id: "A2", date: "14 Aug 2026, 07:41", user: "Lakshmi Venkatesh", action: "UPDATE", role: "Station In-Charge", responsibility: "Station In-Charge", floorId: "F3", stationId: "S303", shift: "Morning", oldValue: "Coordinator: Suresh Iyer", newValue: "Pending approval: Ravi Kumar" },
   { id: "A3", date: "13 Aug 2026, 22:35", user: "System", action: "UPDATE", role: "Nurse Manager", responsibility: "Workforce Oversight", floorId: "F4", stationId: "S403", shift: "Night", oldValue: "Escalation L2", newValue: "Escalation L3" },
-  { id: "A4", date: "12 Aug 2026, 16:40", user: "Meera Raghavan", action: "APPROVE", role: "Nurse Manager", responsibility: "Workforce Oversight", floorId: "F2", stationId: "S201", shift: "Evening", oldValue: "Pending", newValue: "Approved" },
-  { id: "A5", date: "12 Aug 2026, 15:12", user: "Ramesh Gupta", action: "UPDATE", role: "IP Manager", responsibility: "Inpatient Operations", floorId: "F4", stationId: "S401", shift: "Evening", oldValue: "Clinical Admin: —", newValue: "Clinical Admin: Tara Menon" },
+  { id: "A4", date: "12 Aug 2026, 16:40", user: "Meera Raghavan", action: "APPROVE", role: "Nurse Manager", responsibility: "Workforce Oversight", floorId: "F2", stationId: "S201", shift: "Afternoon", oldValue: "Pending", newValue: "Approved" },
+  { id: "A5", date: "12 Aug 2026, 15:12", user: "Ramesh Gupta", action: "UPDATE", role: "IP Manager", responsibility: "Inpatient Operations", floorId: "F4", stationId: "S401", shift: "Afternoon", oldValue: "Clinical Admin: —", newValue: "Clinical Admin: Tara Menon" },
   { id: "A6", date: "11 Aug 2026, 10:05", user: "Meera Raghavan", action: "REJECT", role: "Nurse Manager", responsibility: "Workforce Oversight", floorId: "F3", stationId: "S304", shift: "Morning", oldValue: "Pending", newValue: "Rejected" },
   { id: "A7", date: "10 Aug 2026, 09:15", user: "Sarita Joshi", action: "REMOVE", role: "Floor Manager", responsibility: "Floor Operations", floorId: "F3", stationId: "S304", shift: "Night", oldValue: "Nurse: Rithika Shah", newValue: "—" },
 ];
