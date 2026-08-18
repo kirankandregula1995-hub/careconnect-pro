@@ -392,10 +392,6 @@ function RosterPage() {
   const [editError, setEditError] = useState<string | null>(null);
   const [viewing, setViewing] = useState<RosterEntry | null>(null);
 
-  if (!can("roster")) return <NoPermission area="the roster" />;
-
-  const canManage = hasCap("Roster Management");
-
   const scoped = useMemo(
     () =>
       entries.filter((e) => {
@@ -413,6 +409,11 @@ function RosterPage() {
       }),
     [entries, scopeStationIds, floors, stations, roles, shiftFilter, dates, q],
   );
+
+  if (!can("roster")) return <NoPermission area="the roster" />;
+
+  const canManage = hasCap("Roster Management");
+
 
   const conflictCount = scoped.filter((e) => conflictIds.has(e.id)).length;
   const people = Array.from(new Set(scoped.map((e) => e.careGiverId))).slice(0, 25);
