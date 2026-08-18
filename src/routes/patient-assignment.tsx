@@ -17,8 +17,9 @@ import {
   StateBanner,
   StatusPill,
 } from "@/components/workforce/primitives";
-import { CARE_GIVERS, PATIENTS, STATIONS, floorName, stationName } from "@/data/mock";
-import { evaluateEligibility, isRosteredToday } from "@/data/config";
+import { CARE_GIVERS, PATIENTS, SHIFTS, SHIFT_TIME, STATIONS, floorName, stationName, type Shift } from "@/data/mock";
+import { evaluateEligibility } from "@/data/config";
+import { useRoster } from "@/state/roster";
 import { useSession } from "@/state/session";
 
 export const Route = createFileRoute("/patient-assignment")({
