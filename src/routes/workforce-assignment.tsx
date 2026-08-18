@@ -147,7 +147,7 @@ function WorkforceAssignmentPage() {
               )}
               {blockedPool.length ? (
                 <p className="pt-1 text-xs text-muted-foreground">
-                  {blockedPool.length} active worker(s) hidden — outside location scope or not rostered.
+                  {blockedPool.length} active worker(s) hidden — no active roster for this date, station and shift.
                 </p>
               ) : null}
             </div>
