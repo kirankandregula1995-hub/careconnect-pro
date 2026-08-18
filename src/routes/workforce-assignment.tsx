@@ -19,7 +19,8 @@ import {
   StatusPill,
 } from "@/components/workforce/primitives";
 import { CARE_GIVERS, SHIFTS, SHIFT_TIME, STATIONS, floorName, stationName, type Shift } from "@/data/mock";
-import { evaluateEligibility, isRosteredToday, shiftCoverageForStation } from "@/data/config";
+import { evaluateEligibility, shiftCoverageForStation } from "@/data/config";
+import { useRoster } from "@/state/roster";
 import { useSession } from "@/state/session";
 
 export const Route = createFileRoute("/workforce-assignment")({
