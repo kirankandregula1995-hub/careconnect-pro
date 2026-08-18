@@ -380,7 +380,7 @@ function BulkUpload({ allowedStationIds }: { allowedStationIds: string[] }) {
 
 function RosterPage() {
   const { can, hasCap, scopeStationIds } = useSession();
-  const { entries, week, conflictIds, conflictMessage, updateEntry } = useRoster();
+  const { entries, week, conflictIds, updateEntry } = useRoster();
   const [view, setView] = useState<View>("grid");
   const [q, setQ] = useState("");
   const [floors, setFloors] = useState<string[]>([]);
