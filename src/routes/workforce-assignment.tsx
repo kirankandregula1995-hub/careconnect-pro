@@ -81,8 +81,21 @@ function WorkforceAssignmentPage() {
 
       {view === "new" ? (
         <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
-          <SectionCard title="Step 1 — Configuration" description="Choose the station and shift the assignment applies to">
-            <div className="grid gap-4 sm:grid-cols-2">
+          <SectionCard title="Step 1 — Configuration" description="Choose the date, station and shift the assignment applies to">
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label>Date</Label>
+                <Select value={date} onValueChange={(v) => { setDate(v); setWorkerId(""); }}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {week.map((d) => (
+                      <SelectItem key={d} value={d}>
+                        {new Date(`${d}T00:00:00`).toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short" })}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-1.5">
                 <Label>Nursing station</Label>
                 <Select value={stationId} onValueChange={(v) => { setStationId(v); setWorkerId(""); }}>
@@ -96,7 +109,7 @@ function WorkforceAssignmentPage() {
               </div>
               <div className="space-y-1.5">
                 <Label>Shift</Label>
-                <Select value={shift} onValueChange={(v) => setShift(v as Shift)}>
+                <Select value={shift} onValueChange={(v) => { setShift(v as Shift); setWorkerId(""); }}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {SHIFTS.map((s) => <SelectItem key={s} value={s}>{s} · {SHIFT_TIME[s]}</SelectItem>)}
@@ -107,11 +120,15 @@ function WorkforceAssignmentPage() {
 
             <div className="mt-5 space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Step 2 — Eligible workforce ({eligiblePool.length})
+                Step 2 — Eligible workforce ({eligiblePool.length}) · roster-gated
               </p>
               {eligiblePool.length === 0 ? (
-                <EmptyState title="No eligible workforce" description="No active, rostered worker is inside this station's location scope." />
+                <EmptyState
+                  title="No eligible workforce"
+                  description="No active roster found for this workforce member for the selected station and shift."
+                />
               ) : (
+
                 <div className="grid gap-2 sm:grid-cols-2">
                   {eligiblePool.slice(0, 12).map((c) => (
                     <button
