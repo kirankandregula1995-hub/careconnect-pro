@@ -17,8 +17,9 @@ import {
   StateBanner,
   StatusPill,
 } from "@/components/workforce/primitives";
-import { CARE_GIVERS, PATIENTS, STATIONS, floorName, stationName } from "@/data/mock";
-import { evaluateEligibility, isRosteredToday } from "@/data/config";
+import { CARE_GIVERS, PATIENTS, SHIFTS, SHIFT_TIME, STATIONS, floorName, stationName, type Shift } from "@/data/mock";
+import { evaluateEligibility } from "@/data/config";
+import { useRoster } from "@/state/roster";
 import { useSession } from "@/state/session";
 
 export const Route = createFileRoute("/patient-assignment")({
@@ -45,8 +46,11 @@ type View = (typeof VIEWS)[number]["value"];
 
 function PatientAssignmentPage() {
   const { can, hasCap, scopeStationIds, scopeLabel } = useSession();
+  const { week, hasActiveRoster } = useRoster();
   const [view, setView] = useState<View>("assign");
   const [stationId, setStationId] = useState(scopeStationIds[0] ?? STATIONS[0]!.id);
+  const [date, setDate] = useState<string>(week[0] ?? "");
+  const [shift, setShift] = useState<Shift>("Morning");
   const [patientId, setPatientId] = useState<string>("");
   const [nurseId, setNurseId] = useState<string>("");
 
@@ -60,9 +64,9 @@ function PatientAssignmentPage() {
     (c) =>
       c.status === "Active" &&
       c.nursePatientMappingConfigured &&
-      c.stationIds.includes(stationId) &&
-      isRosteredToday(c.id),
+      hasActiveRoster(c.id, date, stationId, shift),
   );
+
 
   const result =
     nurseId && patientId
@@ -91,8 +95,30 @@ function PatientAssignmentPage() {
 
       {view === "assign" ? (
         <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
-          <SectionCard title="Configuration and selection" description="Station → patient → eligible nurse">
+          <SectionCard title="Configuration and selection" description="Date → shift → station → patient → eligible nurse">
             <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label>Date</Label>
+                <Select value={date} onValueChange={(v) => { setDate(v); setNurseId(""); }}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {week.map((d) => (
+                      <SelectItem key={d} value={d}>
+                        {new Date(`${d}T00:00:00`).toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short" })}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Shift</Label>
+                <Select value={shift} onValueChange={(v) => { setShift(v as Shift); setNurseId(""); }}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {SHIFTS.map((s) => <SelectItem key={s} value={s}>{s} · {SHIFT_TIME[s]}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-1.5">
                 <Label>Nursing station</Label>
                 <Select value={stationId} onValueChange={(v) => { setStationId(v); setPatientId(""); setNurseId(""); }}>
@@ -114,10 +140,16 @@ function PatientAssignmentPage() {
             </div>
 
             <div className="mt-5 space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Eligible nurses ({nurses.length})</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Eligible nurses ({nurses.length}) · roster-gated
+              </p>
               {nurses.length === 0 ? (
-                <EmptyState title="No eligible nurses" description="No rostered nurse with patient-mapping capability is mapped to this station." />
+                <EmptyState
+                  title="No eligible nurses"
+                  description="No active roster found for this workforce member for the selected station and shift."
+                />
               ) : (
+
                 <div className="grid gap-2 sm:grid-cols-2">
                   {nurses.map((c) => (
                     <button

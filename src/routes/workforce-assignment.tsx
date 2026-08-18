@@ -19,7 +19,8 @@ import {
   StatusPill,
 } from "@/components/workforce/primitives";
 import { CARE_GIVERS, SHIFTS, SHIFT_TIME, STATIONS, floorName, stationName, type Shift } from "@/data/mock";
-import { evaluateEligibility, isRosteredToday, shiftCoverageForStation } from "@/data/config";
+import { evaluateEligibility, shiftCoverageForStation } from "@/data/config";
+import { useRoster } from "@/state/roster";
 import { useSession } from "@/state/session";
 
 export const Route = createFileRoute("/workforce-assignment")({
@@ -46,9 +47,11 @@ type View = (typeof VIEWS)[number]["value"];
 
 function WorkforceAssignmentPage() {
   const { can, hasCap, scopeStationIds, scopeLabel } = useSession();
+  const { week, hasActiveRoster } = useRoster();
   const [view, setView] = useState<View>("new");
   const [stationId, setStationId] = useState(scopeStationIds[0] ?? STATIONS[0]!.id);
   const [shift, setShift] = useState<Shift>("Morning");
+  const [date, setDate] = useState<string>(week[0] ?? "");
   const [workerId, setWorkerId] = useState<string>("");
   const [note, setNote] = useState("");
 
@@ -57,12 +60,11 @@ function WorkforceAssignmentPage() {
   const stations = STATIONS.filter((s) => scopeStationIds.includes(s.id));
   const station = STATIONS.find((s) => s.id === stationId);
 
-  // Eligibility pool: active + rostered + inside the selected station's scope.
+  // Eligibility pool: active + active roster for this date/station/shift.
   const pool = CARE_GIVERS.filter((c) => c.status === "Active");
-  const eligiblePool = pool.filter(
-    (c) => isRosteredToday(c.id) && (c.stationIds.includes(stationId) || c.floorIds.includes(station?.floorId ?? "")),
-  );
+  const eligiblePool = pool.filter((c) => hasActiveRoster(c.id, date, stationId, shift));
   const blockedPool = pool.filter((c) => !eligiblePool.includes(c));
+
 
   const result = workerId ? evaluateEligibility({ careGiverId: workerId, capability: "Station Assignment", stationId }) : null;
   const assigned = CARE_GIVERS.filter((c) => c.stationIds.includes(stationId));
@@ -79,8 +81,21 @@ function WorkforceAssignmentPage() {
 
       {view === "new" ? (
         <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
-          <SectionCard title="Step 1 — Configuration" description="Choose the station and shift the assignment applies to">
-            <div className="grid gap-4 sm:grid-cols-2">
+          <SectionCard title="Step 1 — Configuration" description="Choose the date, station and shift the assignment applies to">
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label>Date</Label>
+                <Select value={date} onValueChange={(v) => { setDate(v); setWorkerId(""); }}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {week.map((d) => (
+                      <SelectItem key={d} value={d}>
+                        {new Date(`${d}T00:00:00`).toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short" })}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-1.5">
                 <Label>Nursing station</Label>
                 <Select value={stationId} onValueChange={(v) => { setStationId(v); setWorkerId(""); }}>
@@ -94,7 +109,7 @@ function WorkforceAssignmentPage() {
               </div>
               <div className="space-y-1.5">
                 <Label>Shift</Label>
-                <Select value={shift} onValueChange={(v) => setShift(v as Shift)}>
+                <Select value={shift} onValueChange={(v) => { setShift(v as Shift); setWorkerId(""); }}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {SHIFTS.map((s) => <SelectItem key={s} value={s}>{s} · {SHIFT_TIME[s]}</SelectItem>)}
@@ -105,11 +120,15 @@ function WorkforceAssignmentPage() {
 
             <div className="mt-5 space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Step 2 — Eligible workforce ({eligiblePool.length})
+                Step 2 — Eligible workforce ({eligiblePool.length}) · roster-gated
               </p>
               {eligiblePool.length === 0 ? (
-                <EmptyState title="No eligible workforce" description="No active, rostered worker is inside this station's location scope." />
+                <EmptyState
+                  title="No eligible workforce"
+                  description="No active roster found for this workforce member for the selected station and shift."
+                />
               ) : (
+
                 <div className="grid gap-2 sm:grid-cols-2">
                   {eligiblePool.slice(0, 12).map((c) => (
                     <button
@@ -128,7 +147,7 @@ function WorkforceAssignmentPage() {
               )}
               {blockedPool.length ? (
                 <p className="pt-1 text-xs text-muted-foreground">
-                  {blockedPool.length} active worker(s) hidden — outside location scope or not rostered.
+                  {blockedPool.length} active worker(s) hidden — no active roster for this date, station and shift.
                 </p>
               ) : null}
             </div>

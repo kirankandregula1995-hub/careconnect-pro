@@ -380,7 +380,7 @@ function BulkUpload({ allowedStationIds }: { allowedStationIds: string[] }) {
 
 function RosterPage() {
   const { can, hasCap, scopeStationIds } = useSession();
-  const { entries, week, conflictIds, conflictMessage, updateEntry } = useRoster();
+  const { entries, week, conflictIds, updateEntry } = useRoster();
   const [view, setView] = useState<View>("grid");
   const [q, setQ] = useState("");
   const [floors, setFloors] = useState<string[]>([]);
@@ -391,10 +391,6 @@ function RosterPage() {
   const [editing, setEditing] = useState<RosterEntry | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
   const [viewing, setViewing] = useState<RosterEntry | null>(null);
-
-  if (!can("roster")) return <NoPermission area="the roster" />;
-
-  const canManage = hasCap("Roster Management");
 
   const scoped = useMemo(
     () =>
@@ -413,6 +409,11 @@ function RosterPage() {
       }),
     [entries, scopeStationIds, floors, stations, roles, shiftFilter, dates, q],
   );
+
+  if (!can("roster")) return <NoPermission area="the roster" />;
+
+  const canManage = hasCap("Roster Management");
+
 
   const conflictCount = scoped.filter((e) => conflictIds.has(e.id)).length;
   const people = Array.from(new Set(scoped.map((e) => e.careGiverId))).slice(0, 25);
