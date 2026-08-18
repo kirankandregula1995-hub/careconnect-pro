@@ -46,9 +46,11 @@ type View = (typeof VIEWS)[number]["value"];
 
 function WorkforceAssignmentPage() {
   const { can, hasCap, scopeStationIds, scopeLabel } = useSession();
+  const { week, hasActiveRoster } = useRoster();
   const [view, setView] = useState<View>("new");
   const [stationId, setStationId] = useState(scopeStationIds[0] ?? STATIONS[0]!.id);
   const [shift, setShift] = useState<Shift>("Morning");
+  const [date, setDate] = useState<string>(week[0] ?? "");
   const [workerId, setWorkerId] = useState<string>("");
   const [note, setNote] = useState("");
 
@@ -57,12 +59,11 @@ function WorkforceAssignmentPage() {
   const stations = STATIONS.filter((s) => scopeStationIds.includes(s.id));
   const station = STATIONS.find((s) => s.id === stationId);
 
-  // Eligibility pool: active + rostered + inside the selected station's scope.
+  // Eligibility pool: active + active roster for this date/station/shift.
   const pool = CARE_GIVERS.filter((c) => c.status === "Active");
-  const eligiblePool = pool.filter(
-    (c) => isRosteredToday(c.id) && (c.stationIds.includes(stationId) || c.floorIds.includes(station?.floorId ?? "")),
-  );
+  const eligiblePool = pool.filter((c) => hasActiveRoster(c.id, date, stationId, shift));
   const blockedPool = pool.filter((c) => !eligiblePool.includes(c));
+
 
   const result = workerId ? evaluateEligibility({ careGiverId: workerId, capability: "Station Assignment", stationId }) : null;
   const assigned = CARE_GIVERS.filter((c) => c.stationIds.includes(stationId));
