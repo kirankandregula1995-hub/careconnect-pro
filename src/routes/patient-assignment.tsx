@@ -45,8 +45,11 @@ type View = (typeof VIEWS)[number]["value"];
 
 function PatientAssignmentPage() {
   const { can, hasCap, scopeStationIds, scopeLabel } = useSession();
+  const { week, hasActiveRoster } = useRoster();
   const [view, setView] = useState<View>("assign");
   const [stationId, setStationId] = useState(scopeStationIds[0] ?? STATIONS[0]!.id);
+  const [date, setDate] = useState<string>(week[0] ?? "");
+  const [shift, setShift] = useState<Shift>("Morning");
   const [patientId, setPatientId] = useState<string>("");
   const [nurseId, setNurseId] = useState<string>("");
 
@@ -60,9 +63,9 @@ function PatientAssignmentPage() {
     (c) =>
       c.status === "Active" &&
       c.nursePatientMappingConfigured &&
-      c.stationIds.includes(stationId) &&
-      isRosteredToday(c.id),
+      hasActiveRoster(c.id, date, stationId, shift),
   );
+
 
   const result =
     nurseId && patientId
