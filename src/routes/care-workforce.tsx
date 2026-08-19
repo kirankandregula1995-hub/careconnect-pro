@@ -1,4 +1,6 @@
 import { useState } from "react";
+
+const TODAY = new Date().toISOString().slice(0, 10);
 import { createFileRoute } from "@tanstack/react-router";
 import { Download, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -26,6 +28,7 @@ import {
   NoPermission,
   PageHeader,
   SearchBox,
+  SectionCard,
   Segmented,
   StatCard,
   StatusPill,
@@ -43,6 +46,7 @@ import {
   type RoleName,
 } from "@/data/mock";
 import { ROLE_CAPABILITIES, ROLE_SCOPE, CAPABILITIES, type Capability } from "@/data/config";
+import { useRoster } from "@/state/roster";
 import { useSession } from "@/state/session";
 
 export const Route = createFileRoute("/care-workforce")({
@@ -70,6 +74,7 @@ type View = (typeof VIEWS)[number]["value"];
 
 function CareWorkforcePage() {
   const { can, scopeStationIds, scopeFloorIds, scopeLevel, hasCap } = useSession();
+  const { entries, week } = useRoster();
   const [view, setView] = useState<View>("all");
   const [q, setQ] = useState("");
   const [floors, setFloors] = useState<string[]>([]);
@@ -96,6 +101,34 @@ function CareWorkforcePage() {
       (shifts.length === 0 || shifts.includes(c.shift)),
   );
 
+  const today = week.includes(TODAY) ? TODAY : (week[0] ?? TODAY);
+  const todaysRoster = entries.filter((e) => e.date === today && e.status === "Scheduled" && scopeStationIds.includes(e.stationId));
+  const shiftCoverage = SHIFTS.map((sh) => {
+    const forShift = todaysRoster.filter((e) => e.shift === sh);
+    return {
+      shift: sh,
+      stations: new Set(forShift.map((e) => e.stationId)).size,
+      people: new Set(forShift.map((e) => e.careGiverId)).size,
+    };
+  });
+
+  const downloadToday = () => {
+    const header = ["Employee", "Employee ID", "Role", "Date", "Shift", "Shift Time", "Floor", "Nursing Station"];
+    const lines = todaysRoster.map((e) => {
+      const c = all.find((x) => x.id === e.careGiverId);
+      const st = STATIONS.find((x) => x.id === e.stationId);
+      return [c?.name ?? "—", c?.empId ?? "—", c?.role ?? "—", e.date, e.shift, SHIFT_TIME[e.shift], floorName(st?.floorId ?? ""), st?.name ?? "—"];
+    });
+    const csv = [header, ...lines].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `todays-workforce-${today}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Downloaded today's workforce — ${lines.length} record(s)`);
+  };
+
   const rows =
     view === "assigned" ? filtered.filter((c) => c.stationIds.length) :
     view === "unassigned" ? filtered.filter((c) => !c.stationIds.length) :
@@ -108,8 +141,8 @@ function CareWorkforcePage() {
         description="Workforce master — role is the enterprise title and capabilities are defined per role under Policies & Access."
         actions={
           <>
-            <Button size="sm" variant="outline" onClick={() => toast.success("Workforce export queued — Workforce-Master.xlsx")}>
-              <Download className="size-4" /> Export
+            <Button size="sm" variant="outline" onClick={downloadToday}>
+              <Download className="size-4" /> Download Today's Workforce
             </Button>
             {hasCap("Care Workforce Management") ? (
               <Button size="sm" onClick={() => setCreateOpen(true)}><Plus className="size-4" /> Create Workforce</Button>
@@ -124,6 +157,23 @@ function CareWorkforcePage() {
         <StatCard label="Assigned" value={scoped.filter((c) => c.stationIds.length).length} />
         <StatCard label="Unassigned" value={scoped.filter((c) => !c.stationIds.length).length} tone="warning" />
       </div>
+
+      <SectionCard
+        title="Shift coverage today"
+        description={`Stations covered per shift on ${today} — station assignment is one-time, the roster decides who works which shift.`}
+      >
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+          {shiftCoverage.map((c) => (
+            <div key={c.shift} className="rounded-md border border-border px-3 py-2.5">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {c.shift} · {SHIFT_TIME[c.shift]}
+              </p>
+              <p className="num mt-1 text-xl font-semibold">{c.stations} stations</p>
+              <p className="text-xs text-muted-foreground">{c.people} workforce member(s) rostered</p>
+            </div>
+          ))}
+        </div>
+      </SectionCard>
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Segmented options={VIEWS.map((v) => ({ ...v }))} value={view} onChange={setView} />
