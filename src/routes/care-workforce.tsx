@@ -26,6 +26,7 @@ import {
   NoPermission,
   PageHeader,
   SearchBox,
+  SectionCard,
   Segmented,
   StatCard,
   StatusPill,
@@ -33,7 +34,6 @@ import {
 import {
   CARE_GIVERS,
   FLOORS,
-  RESPONSIBILITIES,
   ROLES,
   SHIFTS,
   SHIFT_TIME,
@@ -44,7 +44,10 @@ import {
   type RoleName,
 } from "@/data/mock";
 import { ROLE_CAPABILITIES, ROLE_SCOPE, CAPABILITIES, type Capability } from "@/data/config";
+import { useRoster } from "@/state/roster";
 import { useSession } from "@/state/session";
+
+const TODAY = new Date().toISOString().slice(0, 10);
 
 export const Route = createFileRoute("/care-workforce")({
   head: () => ({
@@ -53,10 +56,10 @@ export const Route = createFileRoute("/care-workforce")({
       {
         name: "description",
         content:
-          "Workforce master with employee ID, department, employment status, role, responsibility and capability configuration.",
+          "Workforce master with employee ID, department, employment status, role, station assignments and shift coverage.",
       },
       { property: "og:title", content: "Care Workforce — Workforce Master & Capabilities" },
-      { property: "og:description", content: "Workforce master with role, responsibility and capability configuration." },
+      { property: "og:description", content: "Workforce master with roles, station assignments and shift coverage." },
     ],
   }),
   component: CareWorkforcePage,
@@ -66,18 +69,17 @@ const VIEWS = [
   { value: "all", label: "All" },
   { value: "assigned", label: "Assigned" },
   { value: "unassigned", label: "Unassigned" },
-  { value: "capabilities", label: "Capabilities" },
 ] as const;
 type View = (typeof VIEWS)[number]["value"];
 
 function CareWorkforcePage() {
   const { can, scopeStationIds, scopeFloorIds, scopeLevel, hasCap } = useSession();
+  const { entries, week } = useRoster();
   const [view, setView] = useState<View>("all");
   const [q, setQ] = useState("");
   const [floors, setFloors] = useState<string[]>([]);
   const [stations, setStations] = useState<string[]>([]);
   const [roles, setRoles] = useState<string[]>([]);
-  const [resps, setResps] = useState<string[]>([]);
   const [shifts, setShifts] = useState<string[]>([]);
   const [detail, setDetail] = useState<CareGiver | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -92,13 +94,40 @@ function CareWorkforcePage() {
 
   const filtered = scoped.filter(
     (c) =>
-      `${c.name} ${c.empId} ${c.role} ${c.responsibility}`.toLowerCase().includes(q.toLowerCase()) &&
+      `${c.name} ${c.empId} ${c.role}`.toLowerCase().includes(q.toLowerCase()) &&
       (floors.length === 0 || c.floorIds.some((f) => floors.includes(f))) &&
       (stations.length === 0 || c.stationIds.some((s) => stations.includes(s))) &&
       (roles.length === 0 || roles.includes(c.role)) &&
-      (resps.length === 0 || resps.includes(c.responsibility)) &&
       (shifts.length === 0 || shifts.includes(c.shift)),
   );
+
+  const today = week.includes(TODAY) ? TODAY : (week[0] ?? TODAY);
+  const todaysRoster = entries.filter((e) => e.date === today && e.status === "Scheduled" && scopeStationIds.includes(e.stationId));
+  const shiftCoverage = SHIFTS.map((sh) => {
+    const forShift = todaysRoster.filter((e) => e.shift === sh);
+    return {
+      shift: sh,
+      stations: new Set(forShift.map((e) => e.stationId)).size,
+      people: new Set(forShift.map((e) => e.careGiverId)).size,
+    };
+  });
+
+  const downloadToday = () => {
+    const header = ["Employee", "Employee ID", "Role", "Date", "Shift", "Shift Time", "Floor", "Nursing Station"];
+    const lines = todaysRoster.map((e) => {
+      const c = all.find((x) => x.id === e.careGiverId);
+      const st = STATIONS.find((x) => x.id === e.stationId);
+      return [c?.name ?? "—", c?.empId ?? "—", c?.role ?? "—", e.date, e.shift, SHIFT_TIME[e.shift], floorName(st?.floorId ?? ""), st?.name ?? "—"];
+    });
+    const csv = [header, ...lines].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `todays-workforce-${today}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Downloaded today's workforce — ${lines.length} record(s)`);
+  };
 
   const rows =
     view === "assigned" ? filtered.filter((c) => c.stationIds.length) :
@@ -109,11 +138,11 @@ function CareWorkforcePage() {
     <div className="space-y-4">
       <PageHeader
         title="Care Workforce"
-        description="Workforce master — role is the enterprise title, responsibility is the operational function, capabilities drive what each role can do."
+        description="Workforce master — role is the enterprise title and capabilities are defined per role under Policies & Access."
         actions={
           <>
-            <Button size="sm" variant="outline" onClick={() => toast.success("Workforce export queued — Workforce-Master.xlsx")}>
-              <Download className="size-4" /> Export
+            <Button size="sm" variant="outline" onClick={downloadToday}>
+              <Download className="size-4" /> Download Today's Workforce
             </Button>
             {hasCap("Care Workforce Management") ? (
               <Button size="sm" onClick={() => setCreateOpen(true)}><Plus className="size-4" /> Create Workforce</Button>
@@ -129,18 +158,33 @@ function CareWorkforcePage() {
         <StatCard label="Unassigned" value={scoped.filter((c) => !c.stationIds.length).length} tone="warning" />
       </div>
 
+      <SectionCard
+        title="Shift coverage today"
+        description={`Stations covered per shift on ${today} — station assignment is one-time, the roster decides who works which shift.`}
+      >
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+          {shiftCoverage.map((c) => (
+            <div key={c.shift} className="rounded-md border border-border px-3 py-2.5">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {c.shift} · {SHIFT_TIME[c.shift]}
+              </p>
+              <p className="num mt-1 text-xl font-semibold">{c.stations} stations</p>
+              <p className="text-xs text-muted-foreground">{c.people} workforce member(s) rostered</p>
+            </div>
+          ))}
+        </div>
+      </SectionCard>
+
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Segmented options={VIEWS.map((v) => ({ ...v }))} value={view} onChange={setView} />
         <SearchBox value={q} onChange={setQ} placeholder="Search name, employee ID…" />
       </div>
 
-      {view !== "capabilities" ? (
-        <>
+      <>
           <FilterBar>
             <MultiSelect label="Floor" options={FLOORS.filter((f) => scopeFloorIds.includes(f.id)).map((f) => ({ value: f.id, label: f.name }))} selected={floors} onChange={setFloors} />
             <MultiSelect label="Station" options={STATIONS.filter((s) => scopeStationIds.includes(s.id)).map((s) => ({ value: s.id, label: s.name }))} selected={stations} onChange={setStations} />
             <MultiSelect label="Role" options={ROLES.map((r) => ({ value: r, label: r }))} selected={roles} onChange={setRoles} />
-            <MultiSelect label="Responsibility" options={RESPONSIBILITIES.map((r) => ({ value: r, label: r }))} selected={resps} onChange={setResps} />
             <MultiSelect label="Shift" options={SHIFTS.map((s) => ({ value: s, label: s }))} selected={shifts} onChange={setShifts} />
           </FilterBar>
 
@@ -155,7 +199,7 @@ function CareWorkforcePage() {
                     <TableHead>Employee ID</TableHead>
                     <TableHead>Department</TableHead>
                     <TableHead>Role</TableHead>
-                    <TableHead>Responsibility</TableHead>
+                    <TableHead>Stations Assigned</TableHead>
                     <TableHead>Floor</TableHead>
                     <TableHead>Station</TableHead>
                     <TableHead>Shift</TableHead>
@@ -172,7 +216,7 @@ function CareWorkforcePage() {
                         {c.stationIds[0] ? STATIONS.find((s) => s.id === c.stationIds[0])?.department : "Unallocated"}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">{c.role}</TableCell>
-                      <TableCell className="whitespace-nowrap">{c.responsibility}</TableCell>
+                      <TableCell className="num">{c.stationIds.length}</TableCell>
                       <TableCell className="whitespace-nowrap">{c.floorIds.map(floorName).join(", ") || "—"}</TableCell>
                       <TableCell className="max-w-[180px] truncate">{c.stationIds.map(stationName).join(", ") || "—"}</TableCell>
                       <TableCell className="whitespace-nowrap">{c.shift}</TableCell>
@@ -186,10 +230,7 @@ function CareWorkforcePage() {
               </Table>
             </div>
           )}
-        </>
-      ) : (
-        <CapabilityMatrix />
-      )}
+      </>
 
       <Sheet open={Boolean(detail)} onOpenChange={(o) => !o && setDetail(null)}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-md">
@@ -197,7 +238,7 @@ function CareWorkforcePage() {
             <>
               <SheetHeader>
                 <SheetTitle>{detail.name}</SheetTitle>
-                <SheetDescription>{detail.role} · {detail.responsibility}</SheetDescription>
+                <SheetDescription>{detail.role} · {detail.stationIds.length} station(s) assigned</SheetDescription>
               </SheetHeader>
               <div className="space-y-4 px-4 pb-6">
                 <div className="rounded-md border border-border p-3">
@@ -255,46 +296,6 @@ function CareWorkforcePage() {
   );
 }
 
-function CapabilityMatrix() {
-  const [overrides, setOverrides] = useState<Record<string, boolean>>({});
-  const key = (r: RoleName, c: Capability) => `${r}|${c}`;
-  const enabled = (r: RoleName, c: Capability) => overrides[key(r, c)] ?? ROLE_CAPABILITIES[r].includes(c);
-
-  return (
-    <div className="overflow-x-auto rounded-lg border border-border bg-card">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="sticky left-0 bg-card">Role</TableHead>
-            {CAPABILITIES.map((c) => (
-              <TableHead key={c} className="whitespace-nowrap text-xs">{c}</TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {ROLES.map((r) => (
-            <TableRow key={r}>
-              <TableCell className="sticky left-0 bg-card font-medium whitespace-nowrap">{r}</TableCell>
-              {CAPABILITIES.map((c) => (
-                <TableCell key={c}>
-                  <Switch
-                    checked={enabled(r, c)}
-                    onCheckedChange={(v) => {
-                      setOverrides((o) => ({ ...o, [key(r, c)]: v }));
-                      toast.success(`${c} ${v ? "enabled" : "disabled"} for ${r}`);
-                    }}
-                    aria-label={`${c} for ${r}`}
-                  />
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
-  );
-}
-
 function CreateWorkforceDialog({
   open,
   onOpenChange,
@@ -309,10 +310,9 @@ function CreateWorkforceDialog({
   const [empId, setEmpId] = useState("EMP-1041");
   const [department, setDepartment] = useState("General Medicine");
   const [role, setRole] = useState<RoleName>("Nurse");
-  const [responsibility, setResponsibility] = useState<string>("Bedside Nursing");
   const [caps, setCaps] = useState<Capability[]>(ROLE_CAPABILITIES["Nurse"]);
 
-  const steps = ["Details", "Role", "Responsibility", "Capabilities"];
+  const steps = ["Details", "Role", "Capabilities"];
 
   const reset = () => { setStep(1); setName(""); };
 
@@ -321,7 +321,7 @@ function CreateWorkforceDialog({
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Create workforce member</DialogTitle>
-          <DialogDescription>Configuration comes first — role and responsibility decide capabilities and eligibility.</DialogDescription>
+          <DialogDescription>Configuration comes first — the role decides capabilities and eligibility.</DialogDescription>
         </DialogHeader>
 
         <ol className="flex items-center gap-1 text-xs">
@@ -364,16 +364,6 @@ function CreateWorkforceDialog({
           ) : null}
 
           {step === 3 ? (
-            <div className="space-y-1.5">
-              <Label>Responsibility (operational function)</Label>
-              <Select value={responsibility} onValueChange={setResponsibility}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{RESPONSIBILITIES.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-          ) : null}
-
-          {step === 4 ? (
             <div className="space-y-2">
               <Label>Capabilities</Label>
               {CAPABILITIES.map((c) => (
@@ -391,7 +381,7 @@ function CreateWorkforceDialog({
 
         <DialogFooter>
           {step > 1 ? <Button variant="outline" onClick={() => setStep((s) => s - 1)}>Back</Button> : null}
-          {step < 4 ? (
+          {step < 3 ? (
             <Button onClick={() => setStep((s) => s + 1)} disabled={step === 1 && !name.trim()}>Next</Button>
           ) : (
             <Button
@@ -401,7 +391,6 @@ function CreateWorkforceDialog({
                   empId,
                   name: name || "New Worker",
                   role,
-                  responsibility: responsibility as CareGiver["responsibility"],
                   shift: "Morning",
                   stationIds: [],
                   floorIds: [],

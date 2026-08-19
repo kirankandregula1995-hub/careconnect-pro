@@ -117,15 +117,15 @@ export const ACCESS_AREAS = [
 ] as const;
 export type AccessArea = (typeof ACCESS_AREAS)[number];
 
-export const RESPONSIBILITY_ACCESS: { responsibility: string; role: RoleName; areas: AccessArea[] }[] = [
-  { responsibility: "Workforce Oversight", role: "Nurse Manager", areas: [...ACCESS_AREAS] },
-  { responsibility: "Station In-Charge", role: "Station In-Charge", areas: ["Dashboard", "Workforce", "Roster", "Station", "Patient", "Task", "Approval", "Reports"] },
-  { responsibility: "Floor Operations", role: "Floor Manager", areas: ["Dashboard", "Workforce", "Roster", "Station", "Task", "Reports", "Audit"] },
-  { responsibility: "Inpatient Operations", role: "IP Manager", areas: ["Dashboard", "Workforce", "Roster", "Station", "Task", "Reports", "Audit"] },
-  { responsibility: "Clinical Administration", role: "Clinical Admin", areas: ["Dashboard", "Workforce", "Roster", "Station", "Task", "Reports"] },
-  { responsibility: "Coordinator", role: "Coordinator", areas: ["Dashboard", "Roster", "Station", "Task"] },
-  { responsibility: "Clinical Pharmacy", role: "Clinical Pharmacist", areas: ["Dashboard", "Roster", "Station", "Task"] },
-  { responsibility: "Bedside Nursing", role: "Nurse", areas: ["Dashboard", "Roster", "Patient", "Task"] },
+export const ROLE_ACCESS: { role: RoleName; areas: AccessArea[] }[] = [
+  { role: "Nurse Manager", areas: [...ACCESS_AREAS] },
+  { role: "Station In-Charge", areas: ["Dashboard", "Workforce", "Roster", "Station", "Patient", "Task", "Approval", "Reports"] },
+  { role: "Floor Manager", areas: ["Dashboard", "Workforce", "Roster", "Station", "Task", "Reports", "Audit"] },
+  { role: "IP Manager", areas: ["Dashboard", "Workforce", "Roster", "Station", "Task", "Reports", "Audit"] },
+  { role: "Clinical Admin", areas: ["Dashboard", "Workforce", "Roster", "Station", "Task", "Reports"] },
+  { role: "Coordinator", areas: ["Dashboard", "Roster", "Station", "Task"] },
+  { role: "Clinical Pharmacist", areas: ["Dashboard", "Roster", "Station", "Task"] },
+  { role: "Nurse", areas: ["Dashboard", "Roster", "Patient", "Task"] },
 ];
 
 /* ----------------------------------- Roster ------------------------------------ */
@@ -204,7 +204,6 @@ export function evaluateEligibility(opts: {
     detail: cg.status === "Active" ? "Active employee" : `Status is ${cg.status}`,
   });
   checks.push({ label: "Role", ok: true, detail: cg.role });
-  checks.push({ label: "Responsibility", ok: true, detail: cg.responsibility });
   checks.push({
     label: `Capability: ${opts.capability}`,
     ok: hasCapability(cg.role, opts.capability),
@@ -222,11 +221,13 @@ export function evaluateEligibility(opts: {
         : "Station is outside this worker's assigned floor/station scope",
     });
   }
-  checks.push({
-    label: "Roster availability",
-    ok: isRosteredToday(cg.id),
-    detail: isRosteredToday(cg.id) ? `Rostered for the ${cg.shift} shift` : "No scheduled roster entry",
-  });
+  if (opts.capability !== "Station Assignment") {
+    checks.push({
+      label: "Roster availability",
+      ok: isRosteredToday(cg.id),
+      detail: isRosteredToday(cg.id) ? `Rostered for the ${cg.shift} shift` : "No scheduled roster entry",
+    });
+  }
   if (opts.patientId) {
     const patient = PATIENTS.find((p) => p.id === opts.patientId);
     const ok = Boolean(patient && opts.stationId && patient.stationId === opts.stationId);
@@ -259,7 +260,7 @@ export const EVENTS: EventDef[] = [
   { id: "EV-W1", category: "Workforce", name: "Workforce member created", trigger: "New workforce record saved", recipientRule: "Role = Nurse Manager in same Hospital", channels: ["In-App", "Email"], priority: "Low", timing: "Immediate" },
   { id: "EV-W2", category: "Workforce", name: "Workforce activated", trigger: "Employment status set to Active", recipientRule: "Station In-Charge of mapped stations", channels: ["In-App"], priority: "Low", timing: "Immediate" },
   { id: "EV-W3", category: "Workforce", name: "Workforce deactivated", trigger: "Employment status set to Inactive", recipientRule: "Nurse Manager + Station In-Charge of mapped stations", channels: ["In-App", "Email"], priority: "High", timing: "Immediate", escalation: "Coverage recheck after 30 min" },
-  { id: "EV-W4", category: "Workforce", name: "Role or responsibility changed", trigger: "Role/Responsibility updated", recipientRule: "Nurse Manager + affected worker", channels: ["In-App", "Email"], priority: "Medium", timing: "Immediate" },
+  { id: "EV-W4", category: "Workforce", name: "Role changed", trigger: "Role updated", recipientRule: "Nurse Manager + affected worker", channels: ["In-App", "Email"], priority: "Medium", timing: "Immediate" },
   { id: "EV-S1", category: "Station", name: "Station assigned", trigger: "Worker mapped to nursing station", recipientRule: "Worker + Station In-Charge (station) + Floor Manager (floor)", channels: ["In-App", "Push"], priority: "Medium", timing: "Immediate" },
   { id: "EV-S2", category: "Station", name: "Station removed", trigger: "Station mapping removed", recipientRule: "Worker + Station In-Charge", channels: ["In-App"], priority: "Medium", timing: "Immediate" },
   { id: "EV-S3", category: "Station", name: "Station moved", trigger: "Worker moved between stations", recipientRule: "Both Station In-Charges + Nurse Manager", channels: ["In-App", "Email"], priority: "High", timing: "Immediate", escalation: "Nurse Manager after 4h SLA" },
@@ -274,7 +275,7 @@ export const EVENTS: EventDef[] = [
   { id: "EV-P2", category: "Patient", name: "Patient unassigned", trigger: "Patient mapping removed", recipientRule: "Previous nurse + Station In-Charge", channels: ["In-App"], priority: "Medium", timing: "Immediate" },
   { id: "EV-P3", category: "Patient", name: "Multi-nurse conflict", trigger: "Second nurse assigned to same patient", recipientRule: "Station In-Charge (approver) + Nurse Manager", channels: ["In-App", "Email"], priority: "High", timing: "Immediate", escalation: "Nurse Manager after 2h" },
   { id: "EV-P4", category: "Patient", name: "Patient approval decided", trigger: "Multi-nurse request approved or rejected", recipientRule: "Requester + affected nurses", channels: ["In-App", "Push"], priority: "Medium", timing: "Immediate" },
-  { id: "EV-T1", category: "Task", name: "Task created", trigger: "Task configured and saved", recipientRule: "Matching Role + Responsibility in the station", channels: ["In-App"], priority: "Low", timing: "Immediate" },
+  { id: "EV-T1", category: "Task", name: "Task created", trigger: "Task configured and saved", recipientRule: "Matching Role in the station", channels: ["In-App"], priority: "Low", timing: "Immediate" },
   { id: "EV-T2", category: "Task", name: "Task assigned", trigger: "Task routed to a worker", recipientRule: "Assignee", channels: ["In-App", "Push"], priority: "Medium", timing: "Immediate" },
   { id: "EV-T3", category: "Task", name: "Task completed", trigger: "Task marked complete", recipientRule: "Station In-Charge", channels: ["In-App"], priority: "Low", timing: "Immediate" },
   { id: "EV-T4", category: "Task", name: "Task overdue", trigger: "Due time passed", recipientRule: "Assignee", channels: ["In-App", "Push"], priority: "High", timing: "At due time", escalation: "Station In-Charge after SLA, Nurse Manager after 2× SLA" },
@@ -294,7 +295,6 @@ export type TaskType = {
   name: string;
   description: string;
   role: RoleName;
-  responsibility: string;
   patientRequirement: "Required" | "Optional" | "Not applicable";
   priority: Priority;
   sla: string;
@@ -302,11 +302,11 @@ export type TaskType = {
 };
 
 export const TASK_TYPES: TaskType[] = [
-  { id: "TT-1", name: "Medication reconciliation", description: "Reconcile home and inpatient medication lists on admission.", role: "Clinical Pharmacist", responsibility: "Clinical Pharmacy", patientRequirement: "Required", priority: "High", sla: "4 hours", escalationRule: "Station In-Charge after SLA, Nurse Manager after 2× SLA" },
-  { id: "TT-2", name: "Shift handover checklist", description: "Bedside handover, pump check and controlled drug count.", role: "Station In-Charge", responsibility: "Station In-Charge", patientRequirement: "Not applicable", priority: "Medium", sla: "1 hour", escalationRule: "Floor Manager after SLA" },
-  { id: "TT-3", name: "Patient transfer coordination", description: "Arrange porter, bed and documentation for inter-station transfer.", role: "Coordinator", responsibility: "Coordinator", patientRequirement: "Required", priority: "Critical", sla: "30 minutes", escalationRule: "Station In-Charge → Nurse Manager every 30 min" },
-  { id: "TT-4", name: "Discharge documentation pack", description: "Assemble summary, prescriptions and follow-up slip.", role: "Clinical Admin", responsibility: "Clinical Administration", patientRequirement: "Optional", priority: "Medium", sla: "6 hours", escalationRule: "Station In-Charge after SLA" },
-  { id: "TT-5", name: "Coverage shortfall review", description: "Review and resolve station coverage below policy minimum.", role: "Floor Manager", responsibility: "Floor Operations", patientRequirement: "Not applicable", priority: "Critical", sla: "30 minutes", escalationRule: "Nurse Manager immediately after SLA" },
+  { id: "TT-1", name: "Medication reconciliation", description: "Reconcile home and inpatient medication lists on admission.", role: "Clinical Pharmacist", patientRequirement: "Required", priority: "High", sla: "4 hours", escalationRule: "Station In-Charge after SLA, Nurse Manager after 2× SLA" },
+  { id: "TT-2", name: "Shift handover checklist", description: "Bedside handover, pump check and controlled drug count.", role: "Station In-Charge", patientRequirement: "Not applicable", priority: "Medium", sla: "1 hour", escalationRule: "Floor Manager after SLA" },
+  { id: "TT-3", name: "Patient transfer coordination", description: "Arrange porter, bed and documentation for inter-station transfer.", role: "Coordinator", patientRequirement: "Required", priority: "Critical", sla: "30 minutes", escalationRule: "Station In-Charge → Nurse Manager every 30 min" },
+  { id: "TT-4", name: "Discharge documentation pack", description: "Assemble summary, prescriptions and follow-up slip.", role: "Clinical Admin", patientRequirement: "Optional", priority: "Medium", sla: "6 hours", escalationRule: "Station In-Charge after SLA" },
+  { id: "TT-5", name: "Coverage shortfall review", description: "Review and resolve station coverage below policy minimum.", role: "Floor Manager", patientRequirement: "Not applicable", priority: "Critical", sla: "30 minutes", escalationRule: "Nurse Manager immediately after SLA" },
 ];
 
 /* -------------------------------- Policy rules --------------------------------- */

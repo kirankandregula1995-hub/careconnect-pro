@@ -19,18 +19,6 @@ export const ROLES: RoleName[] = [
   "Floor Manager",
 ];
 
-export const RESPONSIBILITIES = [
-  "Bedside Nursing",
-  "Station In-Charge",
-  "Clinical Administration",
-  "Coordinator",
-  "Clinical Pharmacy",
-  "Workforce Oversight",
-  "Floor Operations",
-  "Inpatient Operations",
-] as const;
-export type Responsibility = (typeof RESPONSIBILITIES)[number];
-
 export const SHIFTS = ["Morning", "Afternoon", "Night"] as const;
 export type Shift = (typeof SHIFTS)[number];
 export const SHIFT_TIME: Record<Shift, string> = {
@@ -93,7 +81,6 @@ export type CareGiver = {
   empId: string;
   name: string;
   role: RoleName;
-  responsibility: Responsibility;
   shift: Shift;
   stationIds: string[];
   floorIds: string[];
@@ -112,7 +99,6 @@ const cg = (
   empId: string,
   name: string,
   role: RoleName,
-  responsibility: Responsibility,
   shift: Shift,
   stationIds: string[],
   status: CareGiver["status"] = "Active",
@@ -122,7 +108,6 @@ const cg = (
   empId,
   name,
   role,
-  responsibility,
   shift,
   stationIds,
   floorIds: Array.from(new Set(stationIds.map((s) => stationById(s)?.floorId ?? ""))).filter(Boolean),
@@ -133,48 +118,48 @@ const cg = (
 });
 
 export const CARE_GIVERS: CareGiver[] = [
-  cg("CG01", "EMP-1001", "Meera Raghavan", "Nurse Manager", "Workforce Oversight", "Morning", ["S201", "S301", "S302", "S401", "S501"]),
-  cg("CG02", "EMP-1002", "Anitha Kumar", "Clinical Admin", "Clinical Administration", "Morning", ["S301", "S302", "S303", "S304"]),
-  cg("CG03", "EMP-1003", "Ravi Kumar", "Coordinator", "Coordinator", "Morning", ["S301", "S302", "S304"]),
-  cg("CG04", "EMP-1004", "Suresh Iyer", "Coordinator", "Coordinator", "Afternoon", ["S301", "S303"]),
-  cg("CG05", "EMP-1005", "Divya Nair", "Coordinator", "Coordinator", "Night", ["S401", "S402"]),
-  cg("CG06", "EMP-1006", "Fatima Sheikh", "Coordinator", "Coordinator", "Morning", []),
-  cg("CG07", "EMP-1007", "Joseph Mathew", "Coordinator", "Coordinator", "Afternoon", []),
-  cg("CG08", "EMP-1008", "Priya Deshmukh", "Clinical Pharmacist", "Clinical Pharmacy", "Morning", ["S301", "S302"]),
-  cg("CG09", "EMP-1009", "Karthik Menon", "Clinical Pharmacist", "Clinical Pharmacy", "Afternoon", ["S401", "S403"]),
-  cg("CG10", "EMP-1010", "Sneha Pillai", "Clinical Pharmacist", "Clinical Pharmacy", "Morning", ["S501", "S502"]),
-  cg("CG11", "EMP-1011", "Lakshmi Venkatesh", "Station In-Charge", "Station In-Charge", "Morning", ["S301", "S302"]),
-  cg("CG12", "EMP-1012", "Arjun Reddy", "Station In-Charge", "Station In-Charge", "Afternoon", ["S401", "S402"]),
-  cg("CG13", "EMP-1013", "Nisha Verma", "Station In-Charge", "Station In-Charge", "Night", ["S201", "S202"]),
-  cg("CG14", "EMP-1014", "Ramesh Gupta", "IP Manager", "Inpatient Operations", "Morning", ["S201", "S301", "S401"]),
-  cg("CG15", "EMP-1015", "Sarita Joshi", "Floor Manager", "Floor Operations", "Morning", ["S301", "S302", "S303", "S304"]),
-  cg("CG16", "EMP-1016", "Deepa Krishnan", "Nurse", "Bedside Nursing", "Morning", ["S301"]),
-  cg("CG17", "EMP-1017", "Vishal Rao", "Nurse", "Bedside Nursing", "Morning", ["S301"]),
-  cg("CG18", "EMP-1018", "Kavya Suresh", "Nurse", "Bedside Nursing", "Afternoon", ["S301"]),
-  cg("CG19", "EMP-1019", "Manoj Tiwari", "Nurse", "Bedside Nursing", "Night", ["S301"]),
-  cg("CG20", "EMP-1020", "Rekha Bhatt", "Nurse", "Bedside Nursing", "Morning", ["S302"]),
-  cg("CG21", "EMP-1021", "Imran Qureshi", "Nurse", "Bedside Nursing", "Afternoon", ["S302"]),
-  cg("CG22", "EMP-1022", "Shalini Prasad", "Nurse", "Bedside Nursing", "Night", ["S302"], "On Leave"),
-  cg("CG23", "EMP-1023", "Ajay Bhatia", "Nurse", "Bedside Nursing", "Morning", ["S303"]),
-  cg("CG24", "EMP-1024", "Neha Sinha", "Nurse", "Bedside Nursing", "Afternoon", ["S303"]),
-  cg("CG25", "EMP-1025", "Gopal Shetty", "Nurse", "Bedside Nursing", "Morning", ["S304"]),
-  cg("CG26", "EMP-1026", "Aarti Malhotra", "Nurse", "Bedside Nursing", "Afternoon", ["S304"]),
-  cg("CG27", "EMP-1027", "Rahul Kulkarni", "Nurse", "Bedside Nursing", "Morning", ["S401"]),
-  cg("CG28", "EMP-1028", "Swati Chauhan", "Nurse", "Bedside Nursing", "Afternoon", ["S401"]),
-  cg("CG29", "EMP-1029", "Nandini Rao", "Nurse", "Bedside Nursing", "Morning", ["S402"]),
-  cg("CG30", "EMP-1030", "Pooja Agarwal", "Nurse", "Bedside Nursing", "Night", ["S403"]),
-  cg("CG31", "EMP-1031", "Sanjay Patel", "Nurse", "Bedside Nursing", "Morning", ["S201"]),
-  cg("CG32", "EMP-1032", "Bhavna Desai", "Nurse", "Bedside Nursing", "Afternoon", ["S202"]),
-  cg("CG33", "EMP-1033", "Harish Chandra", "Nurse", "Bedside Nursing", "Morning", ["S203"]),
-  cg("CG34", "EMP-1034", "Leela Thomas", "Nurse", "Bedside Nursing", "Morning", ["S501"]),
-  cg("CG35", "EMP-1035", "Farhan Ali", "Nurse", "Bedside Nursing", "Afternoon", ["S502"]),
-  cg("CG36", "EMP-1036", "Anjali Bose", "Nurse", "Bedside Nursing", "Morning", ["S101"]),
+  cg("CG01", "EMP-1001", "Meera Raghavan", "Nurse Manager", "Morning", ["S201", "S301", "S302", "S401", "S501"]),
+  cg("CG02", "EMP-1002", "Anitha Kumar", "Clinical Admin", "Morning", ["S301", "S302", "S303", "S304"]),
+  cg("CG03", "EMP-1003", "Ravi Kumar", "Coordinator", "Morning", ["S301", "S302", "S304"]),
+  cg("CG04", "EMP-1004", "Suresh Iyer", "Coordinator", "Afternoon", ["S301", "S303"]),
+  cg("CG05", "EMP-1005", "Divya Nair", "Coordinator", "Night", ["S401", "S402"]),
+  cg("CG06", "EMP-1006", "Fatima Sheikh", "Coordinator", "Morning", []),
+  cg("CG07", "EMP-1007", "Joseph Mathew", "Coordinator", "Afternoon", []),
+  cg("CG08", "EMP-1008", "Priya Deshmukh", "Clinical Pharmacist", "Morning", ["S301", "S302"]),
+  cg("CG09", "EMP-1009", "Karthik Menon", "Clinical Pharmacist", "Afternoon", ["S401", "S403"]),
+  cg("CG10", "EMP-1010", "Sneha Pillai", "Clinical Pharmacist", "Morning", ["S501", "S502"]),
+  cg("CG11", "EMP-1011", "Lakshmi Venkatesh", "Station In-Charge", "Morning", ["S301", "S302"]),
+  cg("CG12", "EMP-1012", "Arjun Reddy", "Station In-Charge", "Afternoon", ["S401", "S402"]),
+  cg("CG13", "EMP-1013", "Nisha Verma", "Station In-Charge", "Night", ["S201", "S202"]),
+  cg("CG14", "EMP-1014", "Ramesh Gupta", "IP Manager", "Morning", ["S201", "S301", "S401"]),
+  cg("CG15", "EMP-1015", "Sarita Joshi", "Floor Manager", "Morning", ["S301", "S302", "S303", "S304"]),
+  cg("CG16", "EMP-1016", "Deepa Krishnan", "Nurse", "Morning", ["S301"]),
+  cg("CG17", "EMP-1017", "Vishal Rao", "Nurse", "Morning", ["S301"]),
+  cg("CG18", "EMP-1018", "Kavya Suresh", "Nurse", "Afternoon", ["S301"]),
+  cg("CG19", "EMP-1019", "Manoj Tiwari", "Nurse", "Night", ["S301"]),
+  cg("CG20", "EMP-1020", "Rekha Bhatt", "Nurse", "Morning", ["S302"]),
+  cg("CG21", "EMP-1021", "Imran Qureshi", "Nurse", "Afternoon", ["S302"]),
+  cg("CG22", "EMP-1022", "Shalini Prasad", "Nurse", "Night", ["S302"], "On Leave"),
+  cg("CG23", "EMP-1023", "Ajay Bhatia", "Nurse", "Morning", ["S303"]),
+  cg("CG24", "EMP-1024", "Neha Sinha", "Nurse", "Afternoon", ["S303"]),
+  cg("CG25", "EMP-1025", "Gopal Shetty", "Nurse", "Morning", ["S304"]),
+  cg("CG26", "EMP-1026", "Aarti Malhotra", "Nurse", "Afternoon", ["S304"]),
+  cg("CG27", "EMP-1027", "Rahul Kulkarni", "Nurse", "Morning", ["S401"]),
+  cg("CG28", "EMP-1028", "Swati Chauhan", "Nurse", "Afternoon", ["S401"]),
+  cg("CG29", "EMP-1029", "Nandini Rao", "Nurse", "Morning", ["S402"]),
+  cg("CG30", "EMP-1030", "Pooja Agarwal", "Nurse", "Night", ["S403"]),
+  cg("CG31", "EMP-1031", "Sanjay Patel", "Nurse", "Morning", ["S201"]),
+  cg("CG32", "EMP-1032", "Bhavna Desai", "Nurse", "Afternoon", ["S202"]),
+  cg("CG33", "EMP-1033", "Harish Chandra", "Nurse", "Morning", ["S203"]),
+  cg("CG34", "EMP-1034", "Leela Thomas", "Nurse", "Morning", ["S501"]),
+  cg("CG35", "EMP-1035", "Farhan Ali", "Nurse", "Afternoon", ["S502"]),
+  cg("CG36", "EMP-1036", "Anjali Bose", "Nurse", "Morning", ["S101"]),
   // Vikram Singh: has a station and shift, but nurse-patient mapping was never configured -
   // demonstrates the eligibility rule rejecting someone otherwise workforce-active.
-  cg("CG37", "EMP-1037", "Vikram Singh", "Nurse", "Bedside Nursing", "Night", ["S102"], "Active", false),
-  cg("CG38", "EMP-1038", "Tara Menon", "Clinical Admin", "Clinical Administration", "Afternoon", ["S401", "S402", "S403"]),
-  cg("CG39", "EMP-1039", "Mohan Das", "Clinical Admin", "Clinical Administration", "Morning", []),
-  cg("CG40", "EMP-1040", "Rithika Shah", "Nurse", "Bedside Nursing", "Morning", [], "Active"),
+  cg("CG37", "EMP-1037", "Vikram Singh", "Nurse", "Night", ["S102"], "Active", false),
+  cg("CG38", "EMP-1038", "Tara Menon", "Clinical Admin", "Afternoon", ["S401", "S402", "S403"]),
+  cg("CG39", "EMP-1039", "Mohan Das", "Clinical Admin", "Morning", []),
+  cg("CG40", "EMP-1040", "Rithika Shah", "Nurse", "Morning", [], "Active"),
 ];
 
 export const EMERGENCY_CODES = [
@@ -437,7 +422,6 @@ export type AuditEntry = {
   user: string;
   action: "CREATE" | "UPDATE" | "REMOVE" | "APPROVE" | "REJECT";
   role: RoleName;
-  responsibility: Responsibility;
   floorId: string;
   stationId: string;
   shift: Shift;
@@ -446,13 +430,13 @@ export type AuditEntry = {
 };
 
 export const AUDIT: AuditEntry[] = [
-  { id: "A1", date: "14 Aug 2026, 08:05", user: "Meera Raghavan", action: "CREATE", role: "Nurse Manager", responsibility: "Workforce Oversight", floorId: "F3", stationId: "S301", shift: "Morning", oldValue: "—", newValue: "Coordinator: Ravi Kumar" },
-  { id: "A2", date: "14 Aug 2026, 07:41", user: "Lakshmi Venkatesh", action: "UPDATE", role: "Station In-Charge", responsibility: "Station In-Charge", floorId: "F3", stationId: "S303", shift: "Morning", oldValue: "Coordinator: Suresh Iyer", newValue: "Pending approval: Ravi Kumar" },
-  { id: "A3", date: "13 Aug 2026, 22:35", user: "System", action: "UPDATE", role: "Nurse Manager", responsibility: "Workforce Oversight", floorId: "F4", stationId: "S403", shift: "Night", oldValue: "Escalation L2", newValue: "Escalation L3" },
-  { id: "A4", date: "12 Aug 2026, 16:40", user: "Meera Raghavan", action: "APPROVE", role: "Nurse Manager", responsibility: "Workforce Oversight", floorId: "F2", stationId: "S201", shift: "Afternoon", oldValue: "Pending", newValue: "Approved" },
-  { id: "A5", date: "12 Aug 2026, 15:12", user: "Ramesh Gupta", action: "UPDATE", role: "IP Manager", responsibility: "Inpatient Operations", floorId: "F4", stationId: "S401", shift: "Afternoon", oldValue: "Clinical Admin: —", newValue: "Clinical Admin: Tara Menon" },
-  { id: "A6", date: "11 Aug 2026, 10:05", user: "Meera Raghavan", action: "REJECT", role: "Nurse Manager", responsibility: "Workforce Oversight", floorId: "F3", stationId: "S304", shift: "Morning", oldValue: "Pending", newValue: "Rejected" },
-  { id: "A7", date: "10 Aug 2026, 09:15", user: "Sarita Joshi", action: "REMOVE", role: "Floor Manager", responsibility: "Floor Operations", floorId: "F3", stationId: "S304", shift: "Night", oldValue: "Nurse: Rithika Shah", newValue: "—" },
+  { id: "A1", date: "14 Aug 2026, 08:05", user: "Meera Raghavan", action: "CREATE", role: "Nurse Manager", floorId: "F3", stationId: "S301", shift: "Morning", oldValue: "—", newValue: "Coordinator: Ravi Kumar" },
+  { id: "A2", date: "14 Aug 2026, 07:41", user: "Lakshmi Venkatesh", action: "UPDATE", role: "Station In-Charge", floorId: "F3", stationId: "S303", shift: "Morning", oldValue: "Coordinator: Suresh Iyer", newValue: "Pending approval: Ravi Kumar" },
+  { id: "A3", date: "13 Aug 2026, 22:35", user: "System", action: "UPDATE", role: "Nurse Manager", floorId: "F4", stationId: "S403", shift: "Night", oldValue: "Escalation L2", newValue: "Escalation L3" },
+  { id: "A4", date: "12 Aug 2026, 16:40", user: "Meera Raghavan", action: "APPROVE", role: "Nurse Manager", floorId: "F2", stationId: "S201", shift: "Afternoon", oldValue: "Pending", newValue: "Approved" },
+  { id: "A5", date: "12 Aug 2026, 15:12", user: "Ramesh Gupta", action: "UPDATE", role: "IP Manager", floorId: "F4", stationId: "S401", shift: "Afternoon", oldValue: "Clinical Admin: —", newValue: "Clinical Admin: Tara Menon" },
+  { id: "A6", date: "11 Aug 2026, 10:05", user: "Meera Raghavan", action: "REJECT", role: "Nurse Manager", floorId: "F3", stationId: "S304", shift: "Morning", oldValue: "Pending", newValue: "Rejected" },
+  { id: "A7", date: "10 Aug 2026, 09:15", user: "Sarita Joshi", action: "REMOVE", role: "Floor Manager", floorId: "F3", stationId: "S304", shift: "Night", oldValue: "Nurse: Rithika Shah", newValue: "—" },
 ];
 
 export type Policy = {
