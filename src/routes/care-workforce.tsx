@@ -1,6 +1,4 @@
 import { useState } from "react";
-
-const TODAY = new Date().toISOString().slice(0, 10);
 import { createFileRoute } from "@tanstack/react-router";
 import { Download, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -48,6 +46,8 @@ import {
 import { ROLE_CAPABILITIES, ROLE_SCOPE, CAPABILITIES, type Capability } from "@/data/config";
 import { useRoster } from "@/state/roster";
 import { useSession } from "@/state/session";
+
+const TODAY = new Date().toISOString().slice(0, 10);
 
 export const Route = createFileRoute("/care-workforce")({
   head: () => ({
