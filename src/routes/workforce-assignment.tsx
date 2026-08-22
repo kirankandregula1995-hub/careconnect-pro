@@ -20,7 +20,7 @@ import {
   StatusPill,
 } from "@/components/workforce/primitives";
 import { CARE_GIVERS, FLOORS, SHIFTS, SHIFT_TIME, STATIONS, floorName, stationName } from "@/data/mock";
-import { evaluateEligibility } from "@/data/config";
+import { canConfigureRole, configurersFor, evaluateEligibility } from "@/data/config";
 import { useRoster } from "@/state/roster";
 import { useSession } from "@/state/session";
 
@@ -50,7 +50,7 @@ type View = (typeof VIEWS)[number]["value"];
 const TODAY = new Date().toISOString().slice(0, 10);
 
 function WorkforceAssignmentPage() {
-  const { can, hasCap, scopeStationIds, scopeFloorIds, scopeLabel } = useSession();
+  const { can, hasCap, role, scopeStationIds, scopeFloorIds, scopeLabel } = useSession();
   const { entries, week } = useRoster();
   const [view, setView] = useState<View>("new");
   const [level, setLevel] = useState<"Station" | "Floor">("Station");
@@ -68,13 +68,14 @@ function WorkforceAssignmentPage() {
     [level, stationId, floorId],
   );
 
-  const pool = CARE_GIVERS.filter((c) => c.status === "Active");
+  const pool = CARE_GIVERS.filter((c) => c.status === "Active" && canConfigureRole(role, c.role));
   const unmapped = pool.filter((c) => !targetStationIds.every((s) => c.stationIds.includes(s)));
 
   const result = workerId
     ? evaluateEligibility({
         careGiverId: workerId,
         capability: "Station Assignment",
+        actingRole: role,
         ...(level === "Station" ? { stationId } : {}),
       })
     : null;
@@ -221,6 +222,7 @@ function WorkforceAssignmentPage() {
                   <li>Active employment status</li>
                   <li>Role</li>
                   <li>Capability: Station Assignment</li>
+                  <li>Configuration authority (who can configure this role)</li>
                   <li>Location scope match</li>
                 </ul>
                 <p className="mt-3 text-xs text-muted-foreground">
@@ -261,7 +263,8 @@ function WorkforceAssignmentPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          disabled={!hasCap("Station Assignment")}
+                          disabled={!hasCap("Station Assignment") || !canConfigureRole(role, c.role)}
+                          title={!canConfigureRole(role, c.role) ? `${c.role} can only be configured by ${configurersFor(c.role).join(" or ") || "no role via this workflow"}` : undefined}
                           onClick={() => toast.success(`Mapping removed — EV-S2 sent to ${c.name} and Station In-Charge`)}
                         >
                           Remove

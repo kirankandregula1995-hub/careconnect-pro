@@ -128,6 +128,29 @@ export const ROLE_ACCESS: { role: RoleName; areas: AccessArea[] }[] = [
   { role: "Nurse", areas: ["Dashboard", "Roster", "Patient", "Task"] },
 ];
 
+/**
+ * Who is allowed to configure (assign/remove workforce for) a given role - distinct from
+ * ROLE_ACCESS (which screens a role can open) and ROLE_CAPABILITIES (what a role can do). A new
+ * role just needs one new row here, no code changes elsewhere. No universal override: Nurse
+ * Manager can only configure the roles explicitly listed here, same as every other role.
+ */
+export const ROLE_CONFIGURERS: { role: RoleName; configurableBy: RoleName[] }[] = [
+  { role: "Nurse", configurableBy: ["Nurse Manager", "Station In-Charge"] },
+  { role: "Station In-Charge", configurableBy: ["Nurse Manager"] },
+  { role: "Coordinator", configurableBy: ["IP Manager", "Floor Manager"] },
+  { role: "Clinical Pharmacist", configurableBy: ["IP Manager", "Floor Manager"] },
+  { role: "Clinical Admin", configurableBy: ["IP Manager", "Floor Manager"] },
+  { role: "Floor Manager", configurableBy: ["IP Manager"] },
+  { role: "IP Manager", configurableBy: ["Nurse Manager"] },
+  { role: "Nurse Manager", configurableBy: [] },
+];
+
+export const configurersFor = (role: RoleName): RoleName[] =>
+  ROLE_CONFIGURERS.find((r) => r.role === role)?.configurableBy ?? [];
+
+export const canConfigureRole = (actingRole: RoleName, targetRole: RoleName) =>
+  configurersFor(targetRole).includes(actingRole);
+
 /* ----------------------------------- Roster ------------------------------------ */
 
 export type RosterStatus = "Scheduled" | "Off" | "Leave";
@@ -191,6 +214,7 @@ export type EligibilityCheck = { label: string; ok: boolean; detail: string };
 export function evaluateEligibility(opts: {
   careGiverId: string;
   capability: Capability;
+  actingRole?: RoleName;
   stationId?: string;
   patientId?: string;
 }): { eligible: boolean; checks: EligibilityCheck[] } {
@@ -211,6 +235,16 @@ export function evaluateEligibility(opts: {
       ? "Enabled for this role"
       : `${opts.capability} is not enabled for the ${cg.role} role`,
   });
+  if (opts.capability === "Station Assignment" && opts.actingRole) {
+    const ok = canConfigureRole(opts.actingRole, cg.role);
+    checks.push({
+      label: "Configuration authority",
+      ok,
+      detail: ok
+        ? `${opts.actingRole} may configure ${cg.role}`
+        : `${cg.role} can only be configured by ${configurersFor(cg.role).join(" or ") || "no role via this workflow"}`,
+    });
+  }
   if (opts.stationId) {
     const ok = cg.stationIds.includes(opts.stationId);
     checks.push({

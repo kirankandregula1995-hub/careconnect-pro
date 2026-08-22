@@ -1,11 +1,16 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { EmptyState, PageHeader, StatCard, StatusPill } from "@/components/workforce/primitives";
-import { CARE_GIVERS, PATIENTS, SHIFTS, SHIFT_TIME, coverageFor, floorById, stationById } from "@/data/mock";
+import { EligibilityPanel, EmptyState, PageHeader, StatCard, StatusPill } from "@/components/workforce/primitives";
+import { CARE_GIVERS, PATIENTS, SHIFTS, SHIFT_TIME, coverageFor, floorById, stationById, type RoleName } from "@/data/mock";
+import { canConfigureRole, configurersFor, evaluateEligibility } from "@/data/config";
 import { useSession } from "@/state/session";
 
 export const Route = createFileRoute("/stations/$stationId")({
@@ -22,8 +27,9 @@ export const Route = createFileRoute("/stations/$stationId")({
 
 function StationDetail() {
   const { stationId } = Route.useParams();
-  const { inScope } = useSession();
+  const { inScope, hasCap, role: actingRole } = useSession();
   const station = stationById(stationId);
+  const [workerId, setWorkerId] = useState<string>("");
 
   if (!station) return <EmptyState title="Station not found" />;
   if (!inScope(station.id))
@@ -37,8 +43,16 @@ function StationDetail() {
 
   const floor = floorById(station.floorId);
   const people = CARE_GIVERS.filter((c) => c.stationIds.includes(station.id));
-  const group = (role: string) => people.filter((p) => p.role === role);
+  const group = (r: string) => people.filter((p) => p.role === r);
   const patients = PATIENTS.filter((p) => p.stationId === station.id);
+
+  const canAssignHere = hasCap("Station Assignment");
+  const candidates = CARE_GIVERS.filter(
+    (c) => c.status === "Active" && canConfigureRole(actingRole, c.role) && !c.stationIds.includes(station.id),
+  );
+  const result = workerId
+    ? evaluateEligibility({ careGiverId: workerId, capability: "Station Assignment", actingRole, stationId: station.id })
+    : null;
 
   return (
     <div className="space-y-5">
@@ -68,8 +82,9 @@ function StationDetail() {
               ["Clinical Pharmacists", "Clinical Pharmacist"],
               ["Station In-Charge", "Station In-Charge"],
               ["Nurses", "Nurse"],
-            ].map(([label, role]) => {
-              const list = group(role as string);
+            ].map(([label, groupRole]) => {
+              const list = group(groupRole as string);
+              const removable = canConfigureRole(actingRole, groupRole as RoleName);
               return (
                 <div key={label}>
                   <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -87,7 +102,18 @@ function StationDetail() {
                               {p.empId} · {p.shift} {SHIFT_TIME[p.shift]}
                             </p>
                           </div>
-                          <StatusPill value={p.status} />
+                          <div className="flex items-center gap-2">
+                            <StatusPill value={p.status} />
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              disabled={!canAssignHere || !removable}
+                              title={!removable ? `${p.role} can only be configured by ${configurersFor(p.role).join(" or ") || "no role via this workflow"}` : undefined}
+                              onClick={() => toast.success(`${p.name} removed from ${station.name} — EV-S2 sent to ${p.name} and Station In-Charge`)}
+                            >
+                              Remove
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -96,6 +122,49 @@ function StationDetail() {
                 </div>
               );
             })}
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <CardHeader><CardTitle className="text-sm">Assign workforce to this station</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            {!canAssignHere ? (
+              <p className="text-sm text-muted-foreground">You don't have the Station Assignment capability.</p>
+            ) : candidates.length === 0 ? (
+              <EmptyState
+                title="No configurable workforce available"
+                description="Every active worker you're allowed to configure is already mapped to this station, or none exist in scope."
+              />
+            ) : (
+              <>
+                <div className="space-y-1.5">
+                  <Label>Worker</Label>
+                  <Select value={workerId} onValueChange={setWorkerId}>
+                    <SelectTrigger><SelectValue placeholder="Select a worker to assign" /></SelectTrigger>
+                    <SelectContent>
+                      {candidates.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>{c.name} · {c.role}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {result ? (
+                  <>
+                    <EligibilityPanel checks={result.checks} eligible={result.eligible} />
+                    <Button
+                      className="w-full"
+                      disabled={!result.eligible}
+                      onClick={() => {
+                        toast.success(`Assigned to ${station.name} — EV-S1 sent to worker, Station In-Charge and Floor Manager`);
+                        setWorkerId("");
+                      }}
+                    >
+                      Confirm Assignment
+                    </Button>
+                  </>
+                ) : null}
+              </>
+            )}
           </CardContent>
         </Card>
 

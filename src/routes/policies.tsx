@@ -24,6 +24,7 @@ import {
   NOTIFICATION_RULES,
   ROLE_ACCESS,
   ROLE_CAPABILITIES,
+  ROLE_CONFIGURERS,
   ROLE_SCOPE,
 } from "@/data/config";
 import { useSession } from "@/state/session";
@@ -45,7 +46,8 @@ export const Route = createFileRoute("/policies")({
 
 const VIEWS = [
   { value: "capabilities", label: "Role Capabilities" },
-  { value: "access", label: "Responsibility Access" },
+  { value: "access", label: "Role Access" },
+  { value: "configurers", label: "Role Configurers" },
   { value: "features", label: "Feature Permissions" },
   { value: "rules", label: "Policy Rules" },
   { value: "escalation", label: "Escalation" },
@@ -129,6 +131,31 @@ function PoliciesPage() {
                         {r.areas.includes(a) ? <span className="text-success">●</span> : <span className="text-muted-foreground/40">○</span>}
                       </TableCell>
                     ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </SectionCard>
+      ) : null}
+
+      {view === "configurers" ? (
+        <SectionCard title="Role configurers" description="Who is allowed to assign/remove workforce holding each role — separate from who can access the Workforce Assignment / Station Master screens">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Configurable by</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {ROLE_CONFIGURERS.map((r) => (
+                  <TableRow key={r.role}>
+                    <TableCell className="whitespace-nowrap font-medium">{r.role}</TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {r.configurableBy.length ? r.configurableBy.join(", ") : "— (not configurable via this workflow)"}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
