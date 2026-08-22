@@ -19,7 +19,6 @@ import { Route as PatientDashboardRouteImport } from './routes/patient-dashboard
 import { Route as PoliciesRouteImport } from './routes/policies'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as RosterRouteImport } from './routes/roster'
-import { Route as WorkforceAssignmentRouteImport } from './routes/workforce-assignment'
 import { Route as StationsIndexRouteImport } from './routes/stations.index'
 import { Route as StationsStationIdRouteImport } from './routes/stations.$stationId'
 import { Route as TasksIndexRouteImport } from './routes/tasks.index'
@@ -75,11 +74,6 @@ const RosterRoute = RosterRouteImport.update({
   path: '/roster',
   getParentRoute: () => rootRouteImport,
 } as any)
-const WorkforceAssignmentRoute = WorkforceAssignmentRouteImport.update({
-  id: '/workforce-assignment',
-  path: '/workforce-assignment',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const StationsIndexRoute = StationsIndexRouteImport.update({
   id: '/stations/',
   path: '/stations/',
@@ -112,7 +106,6 @@ export interface FileRoutesByFullPath {
   '/policies': typeof PoliciesRoute
   '/reports': typeof ReportsRoute
   '/roster': typeof RosterRoute
-  '/workforce-assignment': typeof WorkforceAssignmentRoute
   '/stations/$stationId': typeof StationsStationIdRoute
   '/tasks/$taskId': typeof TasksTaskIdRoute
   '/stations/': typeof StationsIndexRoute
@@ -129,7 +122,6 @@ export interface FileRoutesByTo {
   '/policies': typeof PoliciesRoute
   '/reports': typeof ReportsRoute
   '/roster': typeof RosterRoute
-  '/workforce-assignment': typeof WorkforceAssignmentRoute
   '/stations/$stationId': typeof StationsStationIdRoute
   '/tasks/$taskId': typeof TasksTaskIdRoute
   '/stations': typeof StationsIndexRoute
@@ -147,7 +139,6 @@ export interface FileRoutesById {
   '/policies': typeof PoliciesRoute
   '/reports': typeof ReportsRoute
   '/roster': typeof RosterRoute
-  '/workforce-assignment': typeof WorkforceAssignmentRoute
   '/stations/$stationId': typeof StationsStationIdRoute
   '/tasks/$taskId': typeof TasksTaskIdRoute
   '/stations/': typeof StationsIndexRoute
@@ -166,7 +157,6 @@ export interface FileRouteTypes {
     | '/policies'
     | '/reports'
     | '/roster'
-    | '/workforce-assignment'
     | '/stations/$stationId'
     | '/tasks/$taskId'
     | '/stations/'
@@ -183,7 +173,6 @@ export interface FileRouteTypes {
     | '/policies'
     | '/reports'
     | '/roster'
-    | '/workforce-assignment'
     | '/stations/$stationId'
     | '/tasks/$taskId'
     | '/stations'
@@ -200,7 +189,6 @@ export interface FileRouteTypes {
     | '/policies'
     | '/reports'
     | '/roster'
-    | '/workforce-assignment'
     | '/stations/$stationId'
     | '/tasks/$taskId'
     | '/stations/'
@@ -218,7 +206,6 @@ export interface RootRouteChildren {
   PoliciesRoute: typeof PoliciesRoute
   ReportsRoute: typeof ReportsRoute
   RosterRoute: typeof RosterRoute
-  WorkforceAssignmentRoute: typeof WorkforceAssignmentRoute
   StationsStationIdRoute: typeof StationsStationIdRoute
   TasksTaskIdRoute: typeof TasksTaskIdRoute
   StationsIndexRoute: typeof StationsIndexRoute
@@ -297,13 +284,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RosterRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/workforce-assignment': {
-      id: '/workforce-assignment'
-      path: '/workforce-assignment'
-      fullPath: '/workforce-assignment'
-      preLoaderRoute: typeof WorkforceAssignmentRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/stations/': {
       id: '/stations/'
       path: '/stations'
@@ -346,7 +326,6 @@ const rootRouteChildren: RootRouteChildren = {
   PoliciesRoute: PoliciesRoute,
   ReportsRoute: ReportsRoute,
   RosterRoute: RosterRoute,
-  WorkforceAssignmentRoute: WorkforceAssignmentRoute,
   StationsStationIdRoute: StationsStationIdRoute,
   TasksTaskIdRoute: TasksTaskIdRoute,
   StationsIndexRoute: StationsIndexRoute,

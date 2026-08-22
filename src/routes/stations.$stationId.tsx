@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { EligibilityPanel, EmptyState, PageHeader, StatCard, StatusPill } from "@/components/workforce/primitives";
-import { CARE_GIVERS, PATIENTS, SHIFTS, SHIFT_TIME, coverageFor, floorById, stationById, type RoleName } from "@/data/mock";
+import { CARE_GIVERS, PATIENTS, SHIFTS, SHIFT_TIME, STATIONS, coverageFor, floorById, stationById, type RoleName } from "@/data/mock";
 import { canConfigureRole, configurersFor, evaluateEligibility } from "@/data/config";
 import { useSession } from "@/state/session";
 
@@ -29,6 +29,7 @@ function StationDetail() {
   const { stationId } = Route.useParams();
   const { inScope, hasCap, role: actingRole } = useSession();
   const station = stationById(stationId);
+  const [level, setLevel] = useState<"Station" | "Floor">("Station");
   const [workerId, setWorkerId] = useState<string>("");
 
   if (!station) return <EmptyState title="Station not found" />;
@@ -47,11 +48,18 @@ function StationDetail() {
   const patients = PATIENTS.filter((p) => p.stationId === station.id);
 
   const canAssignHere = hasCap("Station Assignment");
+  const targetStationIds =
+    level === "Station" ? [station.id] : STATIONS.filter((s) => s.floorId === station.floorId).map((s) => s.id);
   const candidates = CARE_GIVERS.filter(
-    (c) => c.status === "Active" && canConfigureRole(actingRole, c.role) && !c.stationIds.includes(station.id),
+    (c) => c.status === "Active" && canConfigureRole(actingRole, c.role) && !targetStationIds.every((s) => c.stationIds.includes(s)),
   );
   const result = workerId
-    ? evaluateEligibility({ careGiverId: workerId, capability: "Station Assignment", actingRole, stationId: station.id })
+    ? evaluateEligibility({
+        careGiverId: workerId,
+        capability: "Station Assignment",
+        actingRole,
+        ...(level === "Station" ? { stationId: station.id } : {}),
+      })
     : null;
 
   return (
@@ -126,36 +134,49 @@ function StationDetail() {
         </Card>
 
         <Card className="lg:col-span-2">
-          <CardHeader><CardTitle className="text-sm">Assign workforce to this station</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm">Assign workforce</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             {!canAssignHere ? (
               <p className="text-sm text-muted-foreground">You don't have the Station Assignment capability.</p>
-            ) : candidates.length === 0 ? (
-              <EmptyState
-                title="No configurable workforce available"
-                description="Every active worker you're allowed to configure is already mapped to this station, or none exist in scope."
-              />
             ) : (
               <>
-                <div className="space-y-1.5">
-                  <Label>Worker</Label>
-                  <Select value={workerId} onValueChange={setWorkerId}>
-                    <SelectTrigger><SelectValue placeholder="Select a worker to assign" /></SelectTrigger>
-                    <SelectContent>
-                      {candidates.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>{c.name} · {c.role}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label>Assign to</Label>
+                    <Select value={level} onValueChange={(v) => { setLevel(v as "Station" | "Floor"); setWorkerId(""); }}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Station">This station only</SelectItem>
+                        <SelectItem value="Floor">All stations on {floor?.name}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Worker</Label>
+                    <Select value={workerId} onValueChange={setWorkerId}>
+                      <SelectTrigger><SelectValue placeholder="Select a worker to assign" /></SelectTrigger>
+                      <SelectContent>
+                        {candidates.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>{c.name} · {c.role}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                {result ? (
+                {candidates.length === 0 ? (
+                  <EmptyState
+                    title="No configurable workforce available"
+                    description="Every active worker you're allowed to configure is already mapped to this scope, or none exist in your scope."
+                  />
+                ) : result ? (
                   <>
                     <EligibilityPanel checks={result.checks} eligible={result.eligible} />
                     <Button
                       className="w-full"
                       disabled={!result.eligible}
                       onClick={() => {
-                        toast.success(`Assigned to ${station.name} — EV-S1 sent to worker, Station In-Charge and Floor Manager`);
+                        const scopeLabel = level === "Station" ? station.name : `${targetStationIds.length} station(s) on ${floor?.name}`;
+                        toast.success(`Assigned to ${scopeLabel} — EV-S1 sent to worker, Station In-Charge and Floor Manager`);
                         setWorkerId("");
                       }}
                     >

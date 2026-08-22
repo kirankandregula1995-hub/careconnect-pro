@@ -21,7 +21,6 @@ export type NavKey =
   | "care-workforce"
   | "stations"
   | "roster"
-  | "workforce-assignment"
   | "patient-assignment"
   | "policies"
   | "tasks"
@@ -37,7 +36,6 @@ const NAV_REQUIREMENT: Record<NavKey, Capability[] | "always"> = {
   "care-workforce": ["Care Workforce Management"],
   stations: "always",
   roster: ["Roster View"],
-  "workforce-assignment": ["Station Assignment"],
   "patient-assignment": ["Patient Assignment"],
   policies: ["Approval", "Audit"],
   tasks: ["Task Execution", "Task Assignment"],

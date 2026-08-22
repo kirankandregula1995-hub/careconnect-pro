@@ -97,7 +97,7 @@ function WorkforceDashboard() {
         actions={
           <>
             {hasCap("Station Assignment") ? (
-              <Button asChild size="sm"><Link to="/workforce-assignment">Assign Station</Link></Button>
+              <Button asChild size="sm"><Link to="/stations">Assign Station</Link></Button>
             ) : null}
             {hasCap("Roster Management") ? (
               <Button asChild size="sm" variant="outline"><Link to="/roster">Configure Roster</Link></Button>
