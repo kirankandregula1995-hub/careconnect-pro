@@ -22,7 +22,7 @@ import {
   FEATURES,
   FEATURE_MATRIX,
   NOTIFICATION_RULES,
-  RESPONSIBILITY_ACCESS,
+  ROLE_ACCESS,
   ROLE_CAPABILITIES,
   ROLE_SCOPE,
 } from "@/data/config";
@@ -34,7 +34,7 @@ export const Route = createFileRoute("/policies")({
       { title: "Policies & Access — Roles, Capabilities and Rules" },
       {
         name: "description",
-        content: "Role capability matrix, responsibility access, locality scope, feature permissions, approval, notification and escalation rules.",
+        content: "Role capability matrix, role access, locality scope, feature permissions, approval, notification and escalation rules.",
       },
       { property: "og:title", content: "Policies & Access — Roles, Capabilities and Rules" },
       { property: "og:description", content: "Capability matrix, access scope and governance rules." },
@@ -111,21 +111,19 @@ function PoliciesPage() {
       ) : null}
 
       {view === "access" ? (
-        <SectionCard title="Responsibility access" description="Which modules each operational responsibility can open">
+        <SectionCard title="Role access" description="Which modules each role can open">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Responsibility</TableHead>
                   <TableHead>Role</TableHead>
                   {ACCESS_AREAS.map((a) => <TableHead key={a} className="text-xs">{a}</TableHead>)}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {RESPONSIBILITY_ACCESS.map((r) => (
-                  <TableRow key={r.responsibility}>
-                    <TableCell className="whitespace-nowrap font-medium">{r.responsibility}</TableCell>
-                    <TableCell className="whitespace-nowrap">{r.role}</TableCell>
+                {ROLE_ACCESS.map((r) => (
+                  <TableRow key={r.role}>
+                    <TableCell className="whitespace-nowrap font-medium">{r.role}</TableCell>
                     {ACCESS_AREAS.map((a) => (
                       <TableCell key={a} className="text-center">
                         {r.areas.includes(a) ? <span className="text-success">●</span> : <span className="text-muted-foreground/40">○</span>}

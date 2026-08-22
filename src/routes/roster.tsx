@@ -424,7 +424,6 @@ function RosterPage() {
       "Employee",
       "Employee ID",
       "Role",
-      "Responsibility",
       "Date",
       "Floor",
       "Nursing Station",
@@ -439,7 +438,6 @@ function RosterPage() {
         cg.name,
         cg.empId,
         cg.role,
-        cg.responsibility,
         e.date,
         floorName(station.floorId),
         station.name,
@@ -604,7 +602,6 @@ function RosterPage() {
                     <TableHead>Employee</TableHead>
                     <TableHead>Employee ID</TableHead>
                     <TableHead>Role</TableHead>
-                    <TableHead>Responsibility</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Floor</TableHead>
                     <TableHead>Nursing Station</TableHead>
@@ -623,7 +620,6 @@ function RosterPage() {
                         <TableCell className="whitespace-nowrap font-medium">{cg.name}</TableCell>
                         <TableCell className="num">{cg.empId}</TableCell>
                         <TableCell className="whitespace-nowrap">{cg.role}</TableCell>
-                        <TableCell className="whitespace-nowrap">{cg.responsibility}</TableCell>
                         <TableCell className="num whitespace-nowrap">{dateLabel(e.date)}</TableCell>
                         <TableCell className="whitespace-nowrap">{floorName(station.floorId)}</TableCell>
                         <TableCell className="whitespace-nowrap">{station.name}</TableCell>

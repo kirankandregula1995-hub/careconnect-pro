@@ -66,7 +66,7 @@ function TasksPage() {
     <div className="space-y-4">
       <PageHeader
         title="Tasks"
-        description="Tasks are routed by task type, role and responsibility, then tracked against SLA with automatic escalation."
+        description="Tasks are routed by task type and role, then tracked against SLA with automatic escalation."
         actions={
           hasCap("Task Assignment") ? (
             <Button size="sm" onClick={() => toast.success("Task created — EV-T1 sent to matching role in the station")}>
@@ -97,7 +97,6 @@ function TasksPage() {
                 <TableRow>
                   <TableHead>Task type</TableHead>
                   <TableHead>Role</TableHead>
-                  <TableHead>Responsibility</TableHead>
                   <TableHead>Patient</TableHead>
                   <TableHead>Priority</TableHead>
                   <TableHead>SLA</TableHead>
@@ -112,7 +111,6 @@ function TasksPage() {
                       <span className="block text-xs text-muted-foreground">{t.description}</span>
                     </TableCell>
                     <TableCell className="whitespace-nowrap">{t.role}</TableCell>
-                    <TableCell className="whitespace-nowrap">{t.responsibility}</TableCell>
                     <TableCell className="whitespace-nowrap">{t.patientRequirement}</TableCell>
                     <TableCell><PriorityPill value={t.priority} /></TableCell>
                     <TableCell className="num whitespace-nowrap">{t.sla}</TableCell>

@@ -104,7 +104,6 @@ function AuditPage() {
                   <TableHead>User</TableHead>
                   <TableHead>Action</TableHead>
                   <TableHead>Role</TableHead>
-                  <TableHead>Responsibility</TableHead>
                   <TableHead>Floor</TableHead>
                   <TableHead>Station</TableHead>
                   <TableHead>Shift</TableHead>
@@ -119,7 +118,6 @@ function AuditPage() {
                     <TableCell className="whitespace-nowrap font-medium">{a.user}</TableCell>
                     <TableCell><StatusPill value={a.action} /></TableCell>
                     <TableCell className="whitespace-nowrap">{a.role}</TableCell>
-                    <TableCell className="whitespace-nowrap">{a.responsibility}</TableCell>
                     <TableCell className="whitespace-nowrap">{floorName(a.floorId)}</TableCell>
                     <TableCell className="whitespace-nowrap">{stationName(a.stationId)}</TableCell>
                     <TableCell>{a.shift}</TableCell>

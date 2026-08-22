@@ -4,6 +4,7 @@ import {
   Activity,
   Bell,
   BedDouble,
+  Building2,
   CalendarRange,
   ClipboardCheck,
   FileBarChart,
@@ -28,6 +29,7 @@ const NAV: NavItem[] = [
   { key: "workforce-dashboard", to: "/", label: "Workforce Dashboard", icon: LayoutDashboard },
   { key: "patient-dashboard", to: "/patient-dashboard", label: "Patient Dashboard", icon: BedDouble },
   { key: "care-workforce", to: "/care-workforce", label: "Care Workforce", icon: Users },
+  { key: "stations", to: "/stations", label: "Station Master", icon: Building2 },
   { key: "roster", to: "/roster", label: "Roster", icon: CalendarRange },
   { key: "workforce-assignment", to: "/workforce-assignment", label: "Workforce Assignment", icon: MapPin },
   { key: "patient-assignment", to: "/patient-assignment", label: "Patient Assignment", icon: UserSquare2 },
@@ -100,7 +102,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         <div className="border-t border-sidebar-border px-3 py-2.5">
           <p className="truncate text-xs font-medium text-sidebar-accent-foreground">{user.name}</p>
           <p className="truncate text-[11px] text-sidebar-foreground/65">
-            {user.role} · {user.responsibility}
+            {user.role}
           </p>
           <p className="truncate text-[11px] text-sidebar-foreground/50">
             Scope: {scopeLevel} — {scopeLabel}

@@ -17,7 +17,6 @@ import {
   APPROVALS,
   CARE_GIVERS,
   FLOORS,
-  RESPONSIBILITIES,
   ROLES,
   SHIFTS,
   STATIONS,
@@ -52,7 +51,6 @@ function WorkforceDashboard() {
   const [floors, setFloors] = useState<string[]>([]);
   const [stations, setStations] = useState<string[]>([]);
   const [roles, setRoles] = useState<string[]>([]);
-  const [resps, setResps] = useState<string[]>([]);
   const [shifts, setShifts] = useState<string[]>([]);
 
   const visibleStations = STATIONS.filter(
@@ -69,7 +67,6 @@ function WorkforceDashboard() {
       (c.stationIds.length === 0 ? scopeLevel === "Hospital" : c.stationIds.some((s) => scopeStationIds.includes(s))) &&
       (c.stationIds.length === 0 || c.stationIds.some((s) => visibleIds.includes(s))) &&
       (roles.length === 0 || roles.includes(c.role)) &&
-      (resps.length === 0 || resps.includes(c.responsibility)) &&
       (shifts.length === 0 || shifts.includes(c.shift)),
   );
 
@@ -96,7 +93,7 @@ function WorkforceDashboard() {
     <div className="space-y-4">
       <PageHeader
         title="Workforce Dashboard"
-        description={`${user.name} · ${role} · ${user.responsibility} — ${scopeLevel} scope`}
+        description={`${user.name} · ${role} — ${scopeLevel} scope`}
         actions={
           <>
             {hasCap("Station Assignment") ? (
@@ -157,7 +154,6 @@ function WorkforceDashboard() {
           onChange={setStations}
         />
         <MultiSelect label="Role" options={ROLES.map((r) => ({ value: r, label: r }))} selected={roles} onChange={setRoles} />
-        <MultiSelect label="Responsibility" options={RESPONSIBILITIES.map((r) => ({ value: r, label: r }))} selected={resps} onChange={setResps} />
         <MultiSelect label="Shift" options={SHIFTS.map((s) => ({ value: s, label: s }))} selected={shifts} onChange={setShifts} />
       </FilterBar>
 
